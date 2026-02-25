@@ -1,0 +1,26 @@
+name: hyperpay_sdk
+description: Flutter plugin wrapping the official HyperPay (OPPWA) Mobile SDK v7.4.0 for Android and iOS. Supports ReadyUI, CustomUI, Apple Pay, Google Pay, MADA, STC Pay, tokenization, and 3DS2.
+version: 7.4.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.hyperpay.sdk
+        pluginClass: HyperpaySdkPlugin
+      ios:
+        pluginClass: HyperpaySdkPlugin

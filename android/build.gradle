@@ -1,0 +1,82 @@
+group 'com.hyperpay.sdk'
+version '7.4.0'
+
+buildscript {
+    ext.kotlin_version = '2.0.21'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        flatDir {
+            dirs 'libs'
+        }
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'com.hyperpay.sdk'
+    compileSdk 35
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    compileOnly files("${project.projectDir}/libs")
+
+    // HyperPay OPPWA SDK
+    implementation(name: 'oppwa.mobile-7.4.0-release', ext: 'aar')
+
+    // 3DS2 SDK — debug vs release variants
+    debugImplementation(name: 'ipworks3ds_sdk_9374', ext: 'aar')
+    releaseImplementation(name: 'ipworks3ds_sdk_9374_deploy', ext: 'aar')
+
+    // AndroidX & Google dependencies required by OPPWA SDK
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.browser:browser:1.8.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'androidx.fragment:fragment-ktx:1.8.6'
+    implementation 'com.google.android.gms:play-services-wallet:19.4.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

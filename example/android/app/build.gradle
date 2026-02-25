@@ -1,0 +1,55 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace "com.hyperpay.sdk.example"
+    compileSdk 35
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId "com.hyperpay.sdk.example"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    // HyperPay SDK AAR files (from plugin's libs directory)
+    implementation(name: 'oppwa.mobile-7.4.0-release', ext: 'aar')
+    debugImplementation(name: 'ipworks3ds_sdk_9374', ext: 'aar')
+    releaseImplementation(name: 'ipworks3ds_sdk_9374_deploy', ext: 'aar')
+}
+
+// Add flatDir repository for AAR files from the plugin
+repositories {
+    flatDir {
+        dirs project(':hyperpay_sdk').projectDir.toString() + '/libs'
+    }
+}
