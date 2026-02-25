@@ -6,9 +6,9 @@ Pod::Spec.new do |s|
 Flutter plugin for integrating HyperPay (OPPWA) Mobile SDK v7.4.0 on iOS.
 Supports ReadyUI, CustomUI, Apple Pay, tokenization, and 3DS2.
                        DESC
-  s.homepage         = 'https://github.com/hyperpay'
+  s.homepage         = 'https://github.com/hrvojecukman/hyperpay_sdk'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'HyperPay' => 'support@hyperpay.com' }
+  s.author           = { 'Hrvoje Cukman' => 'hrvojecukman@gmail.com' }
   s.source           = { :path => '.' }
 
   s.source_files     = 'Classes/**/*'
