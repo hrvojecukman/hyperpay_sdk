@@ -1,5 +1,8 @@
 # HyperPay SDK for Flutter
 
+[![pub package](https://img.shields.io/pub/v/hyperpay_sdk.svg)](https://pub.dev/packages/hyperpay_sdk)
+[![license](https://img.shields.io/github/license/hrvojecukman/hyperpay_sdk.svg)](https://github.com/hrvojecukman/hyperpay_sdk/blob/main/LICENSE)
+
 Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for Android and iOS.
 
 ## Features
@@ -15,42 +18,74 @@ Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for 
 
 ## Requirements
 
-| Platform | Minimum Version |
-|----------|----------------|
-| iOS      | 13.0           |
-| Android  | API 24 (Android 7.0) |
-| Flutter  | 3.0+           |
-| Dart     | 3.0+           |
+| Platform | Minimum Version        |
+|----------|------------------------|
+| iOS      | 13.0                   |
+| Android  | API 24 (Android 7.0)   |
+| Flutter  | 3.0+                   |
+| Dart     | 3.0+                   |
 
-## Installation
+---
 
-### 1. Add the dependency
+## Getting Started
 
-```yaml
-# pubspec.yaml
-dependencies:
-  hyperpay_sdk:
-    path: ../hyperpay_sdk  # or your local path
+There are **3 steps** to integrate HyperPay into your Flutter app:
+
+1. Install the plugin
+2. Place the native SDK binary files
+3. Configure your Android and iOS projects
+
+### Step 1 — Install the Plugin
+
+```sh
+flutter pub add hyperpay_sdk
 ```
 
-### 2. Place the SDK binary files
+Or add manually to your `pubspec.yaml`:
 
-You must obtain the official HyperPay OPPWA SDK v7.4.0 files and place them in the correct directories.
+```yaml
+dependencies:
+  hyperpay_sdk: ^7.4.0
+```
+
+Then run:
+
+```sh
+flutter pub get
+```
+
+### Step 2 — Place the Native SDK Binary Files
+
+This plugin wraps the official HyperPay OPPWA SDK, which includes proprietary binary files that cannot be distributed via pub.dev. You must obtain them from HyperPay and place them in the correct directories **inside the plugin's cached package folder**.
+
+After running `flutter pub get`, find the plugin's cache location:
+
+```sh
+# The plugin is cached at:
+# ~/.pub-cache/hosted/pub.dev/hyperpay_sdk-7.4.0/
+```
+
+> **Tip:** Alternatively, use a **path dependency** during development so you can place the SDK files more easily:
+> ```yaml
+> dependencies:
+>   hyperpay_sdk:
+>     path: ../hyperpay_sdk  # local clone of the plugin
+> ```
 
 #### Android
 
-Copy the AAR files into `hyperpay_sdk/android/libs/`:
+Place the three AAR files into the plugin's `android/libs/` directory:
 
 ```
 android/libs/
 ├── oppwa.mobile-7.4.0-release.aar
-├── ipworks3ds_sdk_9374.aar          # 3DS debug
-└── ipworks3ds_sdk_9374_deploy.aar   # 3DS release
+├── ipworks3ds_sdk_9374.aar            # 3DS (debug builds)
+└── ipworks3ds_sdk_9374_deploy.aar     # 3DS (release builds)
 ```
 
 #### iOS
 
-Copy the XCFrameworks into `hyperpay_sdk/ios/Frameworks/`:
+Place the XCFramework bundles into the plugin's `ios/Frameworks/` directory:
 
 ```
 ios/Frameworks/
@@ -58,17 +93,13 @@ ios/Frameworks/
 └── ipworks3ds_sdk_deploy_9373.xcframework/
 ```
 
-> For **debug builds** on iOS simulator, replace `ipworks3ds_sdk_deploy_9373.xcframework` with `ipworks3ds_sdk_9373.xcframework` and update the podspec `vendored_frameworks` accordingly.
+> For **iOS simulator** testing, use the debug 3DS framework (`ipworks3ds_sdk_9373.xcframework`) instead of the deploy variant, and update the podspec `vendored_frameworks` accordingly.
 
----
+### Step 3 — Platform Setup
 
-## Platform Setup
+#### Android
 
-### Android Setup
-
-#### 1. Set minimum SDK and Java version
-
-In your app's `android/app/build.gradle`:
+**1. Set minimum SDK and Java version** in `android/app/build.gradle`:
 
 ```gradle
 android {
@@ -90,9 +121,7 @@ android {
 }
 ```
 
-#### 2. Add AAR dependencies
-
-In your app's `android/app/build.gradle`:
+**2. Add AAR dependencies** in `android/app/build.gradle`:
 
 ```gradle
 dependencies {
@@ -108,9 +137,7 @@ repositories {
 }
 ```
 
-#### 3. Configure the shopper result URL scheme
-
-Add an intent filter to your `MainActivity` in `android/app/src/main/AndroidManifest.xml`:
+**3. Configure the shopper result URL scheme** in `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
 <activity android:name=".MainActivity"
@@ -135,9 +162,7 @@ Add an intent filter to your `MainActivity` in `android/app/src/main/AndroidMani
 
 > **Important:** The scheme must be **lowercase only** (e.g. `com.your.app.payments`, not `com.your.App.Payments`). This must match the `shopperResultUrl` parameter you pass to the SDK.
 
-#### 4. Google Pay (optional)
-
-Add to your `AndroidManifest.xml` inside `<application>`:
+**4. Google Pay (optional)** — add inside `<application>` in your `AndroidManifest.xml`:
 
 ```xml
 <meta-data
@@ -145,21 +170,15 @@ Add to your `AndroidManifest.xml` inside `<application>`:
     android:value="true" />
 ```
 
----
+#### iOS
 
-### iOS Setup
-
-#### 1. Set deployment target
-
-In your app's `ios/Podfile`:
+**1. Set deployment target** in `ios/Podfile`:
 
 ```ruby
 platform :ios, '13.0'
 ```
 
-#### 2. Configure static framework for HyperPay
-
-Add this to your `ios/Podfile` inside the `target 'Runner'` block:
+**2. Configure static framework** in `ios/Podfile` inside the `target 'Runner'` block:
 
 ```ruby
 target 'Runner' do
@@ -187,17 +206,13 @@ target 'Runner' do
 end
 ```
 
-#### 3. Configure URL scheme for shopper result callback
+Then run:
 
-In Xcode, go to your target's **Info** tab → **URL Types**, and add:
+```sh
+cd ios && pod install
+```
 
-| Field | Value |
-|-------|-------|
-| Identifier | `com.your.app.payments` |
-| URL Schemes | `com.your.app.payments` |
-| Role | Editor |
-
-Or add directly to `ios/Runner/Info.plist`:
+**3. Configure URL scheme** — add to `ios/Runner/Info.plist`:
 
 ```xml
 <key>CFBundleURLTypes</key>
@@ -215,9 +230,9 @@ Or add directly to `ios/Runner/Info.plist`:
 </array>
 ```
 
-#### 4. Apple Pay (optional)
+Or in Xcode: **Target > Info > URL Types** and add your scheme.
 
-Enable the **Apple Pay** capability in Xcode and configure your merchant ID.
+**4. Apple Pay (optional)** — enable the **Apple Pay** capability in Xcode and configure your merchant ID.
 
 ---
 
@@ -232,14 +247,16 @@ import 'package:hyperpay_sdk/hyperpay_sdk.dart';
 await HyperpaySdk.setup(mode: PaymentMode.test);
 ```
 
-### ReadyUI (Pre-built checkout screen)
+### ReadyUI (Pre-built Checkout Screen)
+
+The simplest way to accept payments. Launches a pre-built payment screen from the SDK.
 
 ```dart
 final result = await HyperpaySdk.checkoutReadyUI(
-  checkoutId: checkoutId,  // from your server
+  checkoutId: checkoutId,  // obtained from your server
   brands: ['VISA', 'MASTER', 'MADA'],
   shopperResultUrl: 'com.your.app.payments',
-  // Optional: Google Pay config (Android)
+  // Optional: Google Pay (Android only)
   googlePayConfig: GooglePayConfig(
     gatewayMerchantId: 'your-merchant-id',
     merchantName: 'Your Company',
@@ -247,7 +264,7 @@ final result = await HyperpaySdk.checkoutReadyUI(
     totalPrice: 100.0,
     currencyCode: 'SAR',
   ),
-  // Optional: Apple Pay config (iOS)
+  // Optional: Apple Pay (iOS only)
   applePayConfig: ApplePayConfig(
     merchantId: 'merchant.com.your.app',
     countryCode: 'SA',
@@ -267,11 +284,13 @@ if (result.isSuccess) {
 }
 ```
 
-### CustomUI (Your own payment form)
+### CustomUI (Your Own Payment Form)
+
+Build your own payment form and submit card details directly.
 
 ```dart
 final result = await HyperpaySdk.payCustomUI(
-  checkoutId: checkoutId,  // from your server
+  checkoutId: checkoutId,  // obtained from your server
   brand: 'VISA',
   cardNumber: '4111111111111111',
   holder: 'John Doe',
@@ -284,7 +303,7 @@ final result = await HyperpaySdk.payCustomUI(
 
 if (result.isSuccess) {
   if (result.transactionType == 'async') {
-    // Redirect-based payment — wait for callback
+    // Redirect-based payment (3DS, bank redirect) — wait for callback
     print('Async payment, redirecting...');
   } else {
     // Synchronous payment — verify on server
@@ -297,7 +316,7 @@ if (result.isSuccess) {
 
 ```dart
 final result = await HyperpaySdk.payApplePay(
-  checkoutId: checkoutId,  // from your server
+  checkoutId: checkoutId,
   merchantId: 'merchant.com.your.app',
   countryCode: 'SA',
   currencyCode: 'SAR',
@@ -306,7 +325,7 @@ final result = await HyperpaySdk.payApplePay(
 );
 ```
 
-### Check payment status
+### Check Payment Status
 
 ```dart
 final info = await HyperpaySdk.getPaymentStatus(
@@ -320,59 +339,6 @@ print('Status: ${info.status}');
 
 ---
 
-## API Reference
-
-### `HyperpaySdk`
-
-| Method | Description |
-|--------|-------------|
-| `setup(mode:)` | Initialize the SDK. Call once before any payment. |
-| `checkoutReadyUI(...)` | Launch the pre-built checkout UI. Returns `PaymentResult`. |
-| `payCustomUI(...)` | Submit a card payment from your own form. Returns `PaymentResult`. |
-| `payApplePay(...)` | Submit an Apple Pay payment (iOS only). Returns `PaymentResult`. |
-| `getPaymentStatus(...)` | Get checkout info for status verification. Returns `CheckoutInfo`. |
-
-### `PaymentResult`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `isSuccess` | `bool` | Whether the payment was successful |
-| `isCanceled` | `bool` | Whether the user canceled |
-| `resourcePath` | `String?` | Resource path for server-side verification |
-| `errorCode` | `String?` | Error code from the SDK |
-| `errorMessage` | `String?` | Human-readable error message |
-| `transactionType` | `String?` | `"sync"` or `"async"` |
-
-### `CheckoutInfo`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | `String?` | Payment status (e.g. `"CHARGED"`) |
-| `paymentBrand` | `String?` | Brand used (e.g. `"VISA"`) |
-| `rawResponse` | `Map?` | Raw SDK response data |
-
-### `PaymentMode`
-
-| Value | Description |
-|-------|-------------|
-| `test` | Sandbox environment |
-| `live` | Production environment |
-
----
-
-## Payment Brands
-
-| Brand | ReadyUI | CustomUI | Notes |
-|-------|---------|----------|-------|
-| `VISA` | Yes | Yes | |
-| `MASTER` | Yes | Yes | |
-| `MADA` | Yes | Yes | Saudi Arabia debit network |
-| `STC_PAY` | Yes | No | |
-| `APPLEPAY` | Yes (via config) | Via `payApplePay` | iOS only |
-| `GOOGLEPAY` | Yes (via config) | N/A | Android only |
-
----
-
 ## Obtaining a Checkout ID
 
 Before calling any payment method, you must obtain a checkout ID from your backend server by calling the HyperPay Preparation API:
@@ -381,7 +347,62 @@ Before calling any payment method, you must obtain a checkout ID from your backe
 POST https://eu-test.oppwa.com/v1/checkouts
 ```
 
-With parameters like `entityId`, `amount`, `currency`, `paymentType`. See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for details.
+With parameters: `entityId`, `amount`, `currency`, `paymentType`, etc.
+
+See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for full details.
+
+---
+
+## API Reference
+
+### `HyperpaySdk`
+
+| Method                 | Description                                                |
+|------------------------|------------------------------------------------------------|
+| `setup(mode:)`         | Initialize the SDK. Call once before any payment.          |
+| `checkoutReadyUI(...)` | Launch the pre-built checkout UI. Returns `PaymentResult`. |
+| `payCustomUI(...)`     | Submit a card payment from your own form. Returns `PaymentResult`. |
+| `payApplePay(...)`     | Submit an Apple Pay payment (iOS only). Returns `PaymentResult`. |
+| `getPaymentStatus(...)` | Get checkout info for verification. Returns `CheckoutInfo`. |
+
+### `PaymentResult`
+
+| Field             | Type      | Description                                |
+|-------------------|-----------|--------------------------------------------|
+| `isSuccess`       | `bool`    | Whether the payment was successful         |
+| `isCanceled`      | `bool`    | Whether the user canceled                  |
+| `resourcePath`    | `String?` | Resource path for server-side verification |
+| `errorCode`       | `String?` | Error code from the SDK                    |
+| `errorMessage`    | `String?` | Human-readable error message               |
+| `transactionType` | `String?` | `"sync"` or `"async"`                      |
+
+### `CheckoutInfo`
+
+| Field          | Type      | Description                            |
+|----------------|-----------|----------------------------------------|
+| `status`       | `String?` | Payment status (e.g. `"CHARGED"`)      |
+| `paymentBrand` | `String?` | Brand used (e.g. `"VISA"`)            |
+| `rawResponse`  | `Map?`    | Raw SDK response data                  |
+
+### `PaymentMode`
+
+| Value  | Description            |
+|--------|------------------------|
+| `test` | Sandbox environment    |
+| `live` | Production environment |
+
+---
+
+## Supported Payment Brands
+
+| Brand       | ReadyUI          | CustomUI         | Notes                       |
+|-------------|------------------|------------------|-----------------------------|
+| `VISA`      | Yes              | Yes              |                             |
+| `MASTER`    | Yes              | Yes              |                             |
+| `MADA`      | Yes              | Yes              | Saudi Arabia debit network  |
+| `STC_PAY`   | Yes              | No               |                             |
+| `APPLEPAY`  | Yes (via config) | Via `payApplePay` | iOS only                   |
+| `GOOGLEPAY` | Yes (via config) | N/A              | Android only                |
 
 ---
 
@@ -402,12 +423,16 @@ The **deploy** (release) 3DS framework doesn't include simulator slices. For sim
 Ensure the URL scheme is correctly configured in both your native project and matches the `shopperResultUrl` parameter exactly (lowercase, no special characters).
 
 ### Google Pay not showing
-1. Add the wallet meta-data to AndroidManifest.xml
+1. Add the wallet meta-data to `AndroidManifest.xml`
 2. Ensure `play-services-wallet` dependency is present
 3. Google Pay requires a real device (not emulator) in most cases
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/hrvojecukman/hyperpay_sdk).
+
 ## License
 
-MIT
+MIT License. See [LICENSE](LICENSE) for details.
