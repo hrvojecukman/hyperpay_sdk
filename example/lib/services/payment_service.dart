@@ -14,6 +14,7 @@ class PaymentService {
 
   static Future<String?> getCheckoutId({
     required String amount,
+    String paymentType = 'DB',
     bool tokenize = false,
     List<String> registrationIds = const [],
   }) async {
@@ -21,7 +22,7 @@ class PaymentService {
       'entityId': entityId,
       'amount': amount,
       'currency': 'SAR',
-      'paymentType': 'DB',
+      'paymentType': paymentType,
     };
     if (tokenize) body['createRegistration'] = 'true';
     for (var i = 0; i < registrationIds.length; i++) {

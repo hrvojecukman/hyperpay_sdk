@@ -8,9 +8,11 @@ class CustomUIBottomSheet extends StatefulWidget {
     super.key,
     required this.amount,
     required this.onPaymentComplete,
+    this.saveOnly = false,
   });
 
   final String amount;
+  final bool saveOnly;
   final void Function(PaymentResult result, String statusText)
       onPaymentComplete;
 
@@ -22,12 +24,14 @@ class CustomUIBottomSheet extends StatefulWidget {
     required String amount,
     required void Function(PaymentResult result, String statusText)
         onPaymentComplete,
+    bool saveOnly = false,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => CustomUIBottomSheet(
         amount: amount,
+        saveOnly: saveOnly,
         onPaymentComplete: onPaymentComplete,
       ),
     );
@@ -42,7 +46,7 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
   final _expiryYearController = TextEditingController(text: '2027');
   final _cvvController = TextEditingController(text: '123');
 
-  bool _saveCard = false;
+  late bool _saveCard = widget.saveOnly;
   bool _isLoading = false;
 
   @override
@@ -60,7 +64,8 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
 
     try {
       final checkoutId = await PaymentService.getCheckoutId(
-        amount: widget.amount,
+        amount: widget.saveOnly ? '0.00' : widget.amount,
+        paymentType: widget.saveOnly ? 'PA' : 'DB',
         tokenize: _saveCard,
       );
       if (checkoutId == null) return;
@@ -83,13 +88,22 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
       );
 
       print('[HyperPay] CustomUI result: ${result.toMap()}');
-      var statusText = PaymentService.formatResult(result);
+      String statusText;
 
-      if (result.isSuccess && _saveCard) {
+      if (widget.saveOnly && result.isSuccess) {
         final regId =
             await PaymentService.extractAndSaveRegistration(checkoutId);
-        if (regId != null) {
-          statusText = '$statusText\nCard saved (ID: $regId)';
+        statusText = regId != null
+            ? 'Card saved successfully (ID: $regId)'
+            : 'Card authorization succeeded but registration not found';
+      } else {
+        statusText = PaymentService.formatResult(result);
+        if (result.isSuccess && _saveCard) {
+          final regId =
+              await PaymentService.extractAndSaveRegistration(checkoutId);
+          if (regId != null) {
+            statusText = '$statusText\nCard saved (ID: $regId)';
+          }
         }
       }
 
@@ -122,7 +136,10 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Pay ${widget.amount} SAR',
+          Text(
+              widget.saveOnly
+                  ? 'Add Card'
+                  : 'Pay ${widget.amount} SAR',
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           TextField(
@@ -187,14 +204,15 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
             ],
           ),
           const SizedBox(height: 8),
-          CheckboxListTile(
-            value: _saveCard,
-            onChanged:
-                _isLoading ? null : (v) => setState(() => _saveCard = v ?? false),
-            title: const Text('Save card for future payments'),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-          ),
+          if (!widget.saveOnly)
+            CheckboxListTile(
+              value: _saveCard,
+              onChanged:
+                  _isLoading ? null : (v) => setState(() => _saveCard = v ?? false),
+              title: const Text('Save card for future payments'),
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+            ),
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _isLoading ? null : _pay,
@@ -205,7 +223,7 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Pay Now'),
+                : Text(widget.saveOnly ? 'Save Card' : 'Pay Now'),
           ),
         ],
       ),

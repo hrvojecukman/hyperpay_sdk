@@ -5,6 +5,7 @@ import 'package:hyperpay_sdk/hyperpay_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/payment_service.dart';
+import 'widgets/custom_ui_bottom_sheet.dart';
 
 const _prefsKey = 'saved_registration_ids';
 
@@ -190,6 +191,22 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
     }
   }
 
+  void _addCard() {
+    CustomUIBottomSheet.show(
+      context: context,
+      amount: '0.00',
+      saveOnly: true,
+      onPaymentComplete: (result, statusText) {
+        if (result.isSuccess) {
+          _showSnackBar('Card saved successfully');
+          _loadCards();
+        } else if (!result.isCanceled) {
+          _showSnackBar(statusText);
+        }
+      },
+    );
+  }
+
   void _showSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -223,6 +240,10 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
         ],
       ),
       body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isLoading ? null : _addCard,
+        child: const Icon(Icons.add_card),
+      ),
     );
   }
 
@@ -252,7 +273,7 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Text(
-            'No saved cards.\n\nPay with CustomUI and check "Save card" to tokenize a card.',
+            'No saved cards.\n\nTap + to add a card.',
             textAlign: TextAlign.center,
           ),
         ),
