@@ -476,7 +476,7 @@ Ensure the URL scheme is correctly configured in both your native project and ma
 
 If this package saved you time, consider buying me a coffee:
 
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-donate-yellow.svg)](https://buymeacoffee.com/hrvojecukman)
+<a href="https://buymeacoffee.com/hrvojecukman" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="217" height="60"></a>
 
 ## Contributing
 
