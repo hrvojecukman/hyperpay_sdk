@@ -472,6 +472,12 @@ Ensure the URL scheme is correctly configured in both your native project and ma
 
 ---
 
+## Support
+
+If this package saved you time, consider buying me a coffee:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-donate-yellow.svg)](https://buymeacoffee.com/hrvojecukman)
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/hrvojecukman/hyperpay_sdk).
