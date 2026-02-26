@@ -18,9 +18,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        flatDir {
-            dirs 'libs'
-        }
+        maven { url 'https://jitpack.io' }
     }
 }
 
@@ -58,14 +56,12 @@ android {
 }
 
 dependencies {
-    compileOnly files("${project.projectDir}/libs")
+    // HyperPay OPPWA SDK (via JitPack)
+    api 'com.github.hrvojecukman.hyperpay_sdk_android:oppwa:v7.4.0.1:oppwa@aar'
 
-    // HyperPay OPPWA SDK
-    implementation(name: 'oppwa.mobile-7.4.0-release', ext: 'aar')
-
-    // 3DS2 SDK — debug vs release variants
-    debugImplementation(name: 'ipworks3ds_sdk_9374', ext: 'aar')
-    releaseImplementation(name: 'ipworks3ds_sdk_9374_deploy', ext: 'aar')
+    // 3DS2 SDK — debug vs release variants (via JitPack)
+    debugApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds:v7.4.0.1:ipworks3ds@aar'
+    releaseApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds_deploy:v7.4.0.1:ipworks3ds_deploy@aar'
 
     // AndroidX & Google dependencies required by OPPWA SDK
     implementation 'androidx.appcompat:appcompat:1.7.0'

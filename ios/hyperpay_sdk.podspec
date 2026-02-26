@@ -17,13 +17,7 @@ Supports ReadyUI, CustomUI, Apple Pay, tokenization, and 3DS2.
   s.swift_version    = '5.0'
 
   s.dependency 'Flutter'
-
-  # HyperPay OPPWA SDK (user must place these in ios/Frameworks/)
-  s.preserve_paths   = 'Frameworks/**/*'
-  s.vendored_frameworks = [
-    'Frameworks/OPPWAMobile.xcframework',
-    'Frameworks/ipworks3ds_sdk_deploy_9373.xcframework'
-  ]
+  s.dependency 'hyperpay_sdk_ios', '7.4.0'
 
   # System frameworks required by the SDK
   s.frameworks = [
@@ -37,8 +31,6 @@ Supports ReadyUI, CustomUI, Apple Pay, tokenization, and 3DS2.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-    'FRAMEWORK_SEARCH_PATHS' => '$(inherited) "$(PODS_ROOT)/../.symlinks/plugins/hyperpay_sdk/ios/Frameworks"',
-    'OTHER_LDFLAGS' => '$(inherited) -framework OPPWAMobile',
   }
 
   # Flutter.framework does not contain a i386 slice.

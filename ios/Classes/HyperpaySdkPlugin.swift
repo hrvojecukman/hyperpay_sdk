@@ -2,9 +2,7 @@ import Flutter
 import UIKit
 import SafariServices
 import PassKit
-
-// Forward declarations — these types come from OPPWAMobile.xcframework.
-// The actual SDK must be present at build time for compilation.
+import OPPWAMobile
 
 public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
@@ -12,6 +10,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
     private var paymentProvider: OPPPaymentProvider?
     private var checkoutProvider: OPPCheckoutProvider?
     private var pendingResult: FlutterResult?
+    private var pendingResourcePath: String?
     private var safariVC: SFSafariViewController?
     private var shopperResultUrl: String?
 
@@ -81,7 +80,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
         // Configure checkout settings
         let checkoutSettings = OPPCheckoutSettings()
-        checkoutSettings.paymentBrands = Set(brands)
+        checkoutSettings.paymentBrands = brands
         checkoutSettings.storePaymentDetails = .prompt
 
         if let shopperUrl = shopperUrl {
@@ -110,7 +109,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
         // Language
         if let lang = args["lang"] as? String {
-            checkoutSettings.locale = lang
+            checkoutSettings.language = lang
         }
 
         // Create checkout provider
@@ -140,12 +139,12 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         guard let pending = pendingResult else { return }
 
         if let error = error as NSError? {
-            let oppError = error as? OPPError
+            let detail = "domain=\(error.domain), code=\(error.code), userInfo=\(error.userInfo)"
             pending([
                 "isSuccess": false,
                 "isCanceled": false,
-                "errorCode": oppError?.code.rawValue ?? error.code,
-                "errorMessage": error.localizedDescription,
+                "errorCode": "\(error.code)",
+                "errorMessage": "\(error.localizedDescription) [\(detail)]",
             ] as [String: Any])
             pendingResult = nil
             return
@@ -171,17 +170,9 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             ] as [String: Any])
             pendingResult = nil
         } else {
-            // Async — redirect URL handling
-            if let redirectUrl = transaction.redirectURL {
-                openSafariVC(url: redirectUrl)
-            }
-            pending([
-                "isSuccess": true,
-                "isCanceled": false,
-                "resourcePath": transaction.resourcePath ?? "",
-                "transactionType": "async",
-            ] as [String: Any])
-            pendingResult = nil
+            // Async — keep pendingResult alive, wait for URL scheme callback
+            // OPPCheckoutProvider handles the redirect UI internally
+            pendingResourcePath = transaction.resourcePath
         }
     }
 
@@ -217,6 +208,9 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         let tokenize = args["tokenize"] as? Bool ?? false
         let shopperUrl = args["shopperResultUrl"] as? String
 
+        NSLog("[HyperPay] CustomUI native params: checkoutId=%@, brand=%@, card=%@, holder=%@, expiry=%@/%@, cvv=%@, tokenize=%d, shopperUrl=%@",
+              checkoutId, brand, cardNumber, holder, expiryMonth, expiryYear, cvv, tokenize ? 1 : 0, shopperUrl ?? "nil")
+
         do {
             let paymentParams = try OPPCardPaymentParams(
                 checkoutID: checkoutId,
@@ -227,6 +221,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
                 expiryYear: expiryYear,
                 cvv: cvv
             )
+            NSLog("[HyperPay] OPPCardPaymentParams created successfully")
 
             if tokenize {
                 paymentParams.isTokenizationEnabled = true
@@ -241,31 +236,25 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
             pendingResult = result
 
+            NSLog("[HyperPay] Submitting transaction to provider...")
+
             provider.submitTransaction(transaction) { [weak self] (transaction, error) in
                 guard let self = self, let pending = self.pendingResult else { return }
-                self.pendingResult = nil
 
                 if let error = error as NSError? {
+                    self.pendingResult = nil
+                    let detail = "domain=\(error.domain), code=\(error.code), userInfo=\(error.userInfo)"
                     pending([
                         "isSuccess": false,
                         "isCanceled": false,
                         "errorCode": "\(error.code)",
-                        "errorMessage": error.localizedDescription,
-                    ] as [String: Any])
-                    return
-                }
-
-                guard let transaction = transaction else {
-                    pending([
-                        "isSuccess": false,
-                        "isCanceled": false,
-                        "errorCode": "UNKNOWN",
-                        "errorMessage": "No transaction returned",
+                        "errorMessage": "\(error.localizedDescription) [\(detail)]",
                     ] as [String: Any])
                     return
                 }
 
                 if transaction.type == .synchronous {
+                    self.pendingResult = nil
                     pending([
                         "isSuccess": true,
                         "isCanceled": false,
@@ -273,20 +262,17 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
                         "transactionType": "sync",
                     ] as [String: Any])
                 } else {
+                    // Async — keep pendingResult alive, wait for URL scheme callback
+                    self.pendingResourcePath = transaction.resourcePath
                     if let redirectUrl = transaction.redirectURL {
                         DispatchQueue.main.async {
                             self.openSafariVC(url: redirectUrl)
                         }
                     }
-                    pending([
-                        "isSuccess": true,
-                        "isCanceled": false,
-                        "resourcePath": transaction.resourcePath ?? "",
-                        "transactionType": "async",
-                    ] as [String: Any])
                 }
             }
         } catch {
+            NSLog("[HyperPay] OPPCardPaymentParams creation failed: %@", error.localizedDescription)
             result(FlutterError(
                 code: "PAYMENT_ERROR",
                 message: error.localizedDescription,
@@ -386,11 +372,42 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
-        // Dismiss Safari VC when receiving callback
+        guard let shopperUrl = shopperResultUrl,
+              url.scheme?.caseInsensitiveCompare(shopperUrl) == .orderedSame else {
+            return false
+        }
+
+        // Dismiss Safari VC (CustomUI async)
         if let safariVC = safariVC {
             safariVC.dismiss(animated: true, completion: nil)
             self.safariVC = nil
         }
+
+        // Dismiss ReadyUI checkout and resolve pending result
+        if let pending = pendingResult {
+            let resourcePath = pendingResourcePath ?? ""
+            pendingResourcePath = nil
+
+            if let checkoutProvider = checkoutProvider {
+                checkoutProvider.dismissCheckout(animated: true) {
+                    pending([
+                        "isSuccess": true,
+                        "isCanceled": false,
+                        "resourcePath": resourcePath,
+                        "transactionType": "async",
+                    ] as [String: Any])
+                }
+            } else {
+                pending([
+                    "isSuccess": true,
+                    "isCanceled": false,
+                    "resourcePath": resourcePath,
+                    "transactionType": "async",
+                ] as [String: Any])
+            }
+            pendingResult = nil
+        }
+
         return true
     }
 
@@ -459,9 +476,17 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
             return
         }
 
-        params.tokenData = payment.token.paymentData
+        let paramsWithToken = try? OPPApplePayPaymentParams(
+            checkoutID: params.checkoutID,
+            paymentBrand: "APPLEPAY",
+            tokenData: payment.token.paymentData
+        )
+        guard let finalParams = paramsWithToken else {
+            completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+            return
+        }
 
-        let transaction = OPPTransaction(paymentParams: params)
+        let transaction = OPPTransaction(paymentParams: finalParams)
         provider.submitTransaction(transaction) { [weak self] (transaction, error) in
             guard let self = self else { return }
             let pending = self.pendingResult
@@ -484,7 +509,7 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
             pending?([
                 "isSuccess": true,
                 "isCanceled": false,
-                "resourcePath": transaction?.resourcePath ?? "",
+                "resourcePath": transaction.resourcePath ?? "",
                 "transactionType": "sync",
             ] as [String: Any])
         }

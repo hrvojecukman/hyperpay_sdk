@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_dotenv: ^6.0.0
+  http: ^1.6.0
+  shared_preferences: ^2.3.0
   hyperpay_sdk:
     path: ../
 
@@ -20,3 +23,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env

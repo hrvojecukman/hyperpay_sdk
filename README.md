@@ -29,11 +29,12 @@ Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for 
 
 ## Getting Started
 
-There are **3 steps** to integrate HyperPay into your Flutter app:
+There are **2 steps** to integrate HyperPay into your Flutter app:
 
 1. Install the plugin
-2. Place the native SDK binary files
-3. Configure your Android and iOS projects
+2. Configure your Android and iOS projects
+
+> **Note:** The native HyperPay OPPWA SDK binaries (AARs and XCFrameworks) are fetched automatically at build time via JitPack (Android) and CocoaPods (iOS). No manual binary placement is required.
 
 ### Step 1 — Install the Plugin
 
@@ -54,52 +55,17 @@ Then run:
 flutter pub get
 ```
 
-### Step 2 — Place the Native SDK Binary Files
-
-This plugin wraps the official HyperPay OPPWA SDK, which includes proprietary binary files that cannot be distributed via pub.dev. You must obtain them from HyperPay and place them in the correct directories **inside the plugin's cached package folder**.
-
-After running `flutter pub get`, find the plugin's cache location:
-
-```sh
-# The plugin is cached at:
-# ~/.pub-cache/hosted/pub.dev/hyperpay_sdk-7.4.0/
-```
-
-> **Tip:** Alternatively, use a **path dependency** during development so you can place the SDK files more easily:
-> ```yaml
-> dependencies:
->   hyperpay_sdk:
->     path: ../hyperpay_sdk  # local clone of the plugin
-> ```
+### Step 2 — Platform Setup
 
 #### Android
 
-Place the three AAR files into the plugin's `android/libs/` directory:
+**1. Add JitPack repository** in your project-level `settings.gradle` (inside `dependencyResolutionManagement.repositories` or `pluginManagement.repositories`):
 
-```
-android/libs/
-├── oppwa.mobile-7.4.0-release.aar
-├── ipworks3ds_sdk_9374.aar            # 3DS (debug builds)
-└── ipworks3ds_sdk_9374_deploy.aar     # 3DS (release builds)
+```gradle
+maven { url 'https://jitpack.io' }
 ```
 
-#### iOS
-
-Place the XCFramework bundles into the plugin's `ios/Frameworks/` directory:
-
-```
-ios/Frameworks/
-├── OPPWAMobile.xcframework/
-└── ipworks3ds_sdk_deploy_9373.xcframework/
-```
-
-> For **iOS simulator** testing, use the debug 3DS framework (`ipworks3ds_sdk_9373.xcframework`) instead of the deploy variant, and update the podspec `vendored_frameworks` accordingly.
-
-### Step 3 — Platform Setup
-
-#### Android
-
-**1. Set minimum SDK and Java version** in `android/app/build.gradle`:
+**2. Set minimum SDK and Java version** in `android/app/build.gradle`:
 
 ```gradle
 android {
@@ -117,22 +83,6 @@ android {
     defaultConfig {
         minSdk 24
         targetSdk 35
-    }
-}
-```
-
-**2. Add AAR dependencies** in `android/app/build.gradle`:
-
-```gradle
-dependencies {
-    implementation(name: 'oppwa.mobile-7.4.0-release', ext: 'aar')
-    debugImplementation(name: 'ipworks3ds_sdk_9374', ext: 'aar')
-    releaseImplementation(name: 'ipworks3ds_sdk_9374_deploy', ext: 'aar')
-}
-
-repositories {
-    flatDir {
-        dirs project(':hyperpay_sdk').projectDir.toString() + '/libs'
     }
 }
 ```
@@ -409,15 +359,14 @@ See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for 
 ## Troubleshooting
 
 ### Android: `ClassNotFoundException` or missing SDK classes
-Make sure all three AAR files are placed in `android/libs/` and the `flatDir` repository is configured in your app's `build.gradle`.
+Ensure JitPack is added to your repositories (`maven { url 'https://jitpack.io' }`). Run `flutter clean && flutter pub get` and rebuild.
 
 ### iOS: Framework not found
-1. Ensure XCFrameworks are in `ios/Frameworks/`
-2. Run `cd ios && pod install --repo-update`
-3. Clean build: `flutter clean && flutter pub get`
+1. Run `cd ios && pod install --repo-update`
+2. Clean build: `flutter clean && flutter pub get`
 
 ### iOS Simulator: 3DS crashes
-The **deploy** (release) 3DS framework doesn't include simulator slices. For simulator testing, use the debug 3DS framework (`ipworks3ds_sdk_9373.xcframework`) and update the podspec.
+The **deploy** (release) 3DS framework doesn't include simulator slices. Simulator testing may require the debug 3DS framework.
 
 ### Async payments not returning
 Ensure the URL scheme is correctly configured in both your native project and matches the `shopperResultUrl` parameter exactly (lowercase, no special characters).

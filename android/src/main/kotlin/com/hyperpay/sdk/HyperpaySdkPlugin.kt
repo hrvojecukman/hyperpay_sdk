@@ -6,23 +6,21 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
-import com.oppwa.mobile.connect.checkout.dialog.CheckoutActivity
-import com.oppwa.mobile.connect.checkout.dialog.CheckoutActivityResult
-import com.oppwa.mobile.connect.checkout.dialog.CheckoutActivityResultContract
+import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResult
+import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResultContract
 import com.oppwa.mobile.connect.checkout.meta.CheckoutSettings
 import com.oppwa.mobile.connect.checkout.meta.CheckoutSkipCVVMode
 import com.oppwa.mobile.connect.exception.PaymentError
 import com.oppwa.mobile.connect.exception.PaymentException
-import com.oppwa.mobile.connect.payment.BrandsValidation
-import com.oppwa.mobile.connect.payment.CheckoutInfo
 import com.oppwa.mobile.connect.payment.card.CardPaymentParams
-import com.oppwa.mobile.connect.payment.token.TokenPaymentParams
 import com.oppwa.mobile.connect.provider.Connect
 import com.oppwa.mobile.connect.provider.ITransactionListener
 import com.oppwa.mobile.connect.provider.OppPaymentProvider
 import com.oppwa.mobile.connect.provider.Transaction
 import com.oppwa.mobile.connect.provider.TransactionType
-import com.oppwa.mobile.connect.provider.ThreeDSWorkflowListener
+import com.oppwa.mobile.connect.utils.googlepay.CardPaymentMethodJsonBuilder
+import com.oppwa.mobile.connect.utils.googlepay.TransactionInfoJsonBuilder
+import com.oppwa.mobile.connect.utils.googlepay.PaymentDataRequestJsonBuilder
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -32,7 +30,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-import com.google.android.gms.wallet.PaymentDataRequest
+import org.json.JSONArray
 
 class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITransactionListener {
 
@@ -116,15 +114,6 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
                     "isCanceled" to true,
                 ))
             }
-            result.paymentError != null -> {
-                val error = result.paymentError!!
-                pending.success(mapOf(
-                    "isSuccess" to false,
-                    "isCanceled" to false,
-                    "errorCode" to error.errorCode,
-                    "errorMessage" to error.errorInfo,
-                ))
-            }
             result.resourcePath != null -> {
                 pending.success(mapOf(
                     "isSuccess" to true,
@@ -167,11 +156,7 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             Connect.ProviderMode.TEST
         }
         paymentProvider = OppPaymentProvider(context!!, providerMode)
-        paymentProvider?.setThreeDSWorkflowListener(object : ThreeDSWorkflowListener {
-            override fun onThreeDSChallengeRequired(): Activity? {
-                return activity
-            }
-        })
+        paymentProvider?.setThreeDSWorkflowListener { activity!! }
         result.success(null)
     }
 
@@ -193,7 +178,6 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             result.error("INVALID_ARGS", "brands is required", null)
             return
         }
-        val shopperResultUrl = call.argument<String>("shopperResultUrl")
         val googlePayConfig = call.argument<Map<String, Any>>("googlePayConfig")
         val lang = call.argument<String>("lang")
 
@@ -201,10 +185,6 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             val paymentBrands = HashSet(brands)
             val checkoutSettings = CheckoutSettings(checkoutId, paymentBrands, providerMode)
             checkoutSettings.setSkipCVVMode(CheckoutSkipCVVMode.FOR_STORED_CARDS)
-
-            if (shopperResultUrl != null) {
-                checkoutSettings.shopperResultUrl = "${shopperResultUrl}://callback"
-            }
 
             if (lang != null) {
                 checkoutSettings.locale = lang
@@ -218,21 +198,27 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
                 val totalPrice = (googlePayConfig["totalPrice"] as? Number)?.toDouble() ?: 0.0
                 val currencyCode = googlePayConfig["currencyCode"] as? String ?: ""
 
-                val googlePayJsonBuilder = com.oppwa.mobile.connect.checkout.googlepay.PaymentDataRequestJsonBuilder()
-                    .setGatewayMerchantId(merchantId)
-                    .setMerchantName(merchantName)
-                    .setTransactionInfo(
-                        com.oppwa.mobile.connect.checkout.googlepay.TransactionInfoJsonBuilder()
-                            .setTotalPrice(totalPrice)
-                            .setTotalPriceStatus("FINAL")
-                            .setCountryCode(countryCode)
-                            .setCurrencyCode(currencyCode)
-                    )
-                    .setCardPaymentMethod(
-                        com.oppwa.mobile.connect.checkout.googlepay.CardPaymentMethodJsonBuilder()
+                val allowedPaymentMethods = JSONArray()
+                    .put(CardPaymentMethodJsonBuilder()
+                        .setAllowedAuthMethods(JSONArray().put("PAN_ONLY").put("CRYPTOGRAM_3DS"))
+                        .setAllowedCardNetworks(JSONArray().put("VISA").put("MASTERCARD"))
+                        .setGatewayMerchantId(merchantId)
+                        .toJson()
                     )
 
-                checkoutSettings.setGooglePayPaymentDataRequestJson(googlePayJsonBuilder)
+                val transactionInfo = TransactionInfoJsonBuilder()
+                    .setCurrencyCode(currencyCode)
+                    .setTotalPriceStatus("FINAL")
+                    .setTotalPrice(totalPrice.toString())
+                    .setCountryCode(countryCode)
+                    .toJson()
+
+                val paymentDataRequest = PaymentDataRequestJsonBuilder()
+                    .setAllowedPaymentMethods(allowedPaymentMethods)
+                    .setTransactionInfo(transactionInfo)
+                    .toJson()
+
+                checkoutSettings.setGooglePayPaymentDataRequestJson(paymentDataRequest.toString())
             }
 
             pendingResult = result
@@ -291,22 +277,21 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             )
 
             if (tokenize) {
-                paymentParams.tokenizationEnabled = true
+                paymentParams.isTokenizationEnabled = true
             }
 
             if (shopperResultUrl != null) {
                 paymentParams.shopperResultUrl = "${shopperResultUrl}://callback"
             }
 
-            paymentProvider!!.setTransactionListener(this)
             pendingResult = result
 
             val transaction = Transaction(paymentParams)
-            paymentProvider!!.submitTransaction(transaction)
+            paymentProvider!!.submitTransaction(transaction, this)
         } catch (e: PaymentException) {
             result.error(
-                e.error?.errorCode ?: "PAYMENT_ERROR",
-                e.error?.errorInfo ?: e.message ?: "Unknown payment error",
+                "PAYMENT_ERROR",
+                e.error?.errorMessage ?: e.message ?: "Unknown payment error",
                 null
             )
         } catch (e: Exception) {
@@ -338,13 +323,10 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
         val pending = pendingResult ?: return
         pendingResult = null
 
-        val resourcePath = transaction.transactionParams?.get("resourcePath") as? String
-
         if (transaction.transactionType == TransactionType.SYNC) {
             pending.success(mapOf(
                 "isSuccess" to true,
                 "isCanceled" to false,
-                "resourcePath" to resourcePath,
                 "transactionType" to "sync",
             ))
         } else {
@@ -361,7 +343,6 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             pending.success(mapOf(
                 "isSuccess" to true,
                 "isCanceled" to false,
-                "resourcePath" to resourcePath,
                 "transactionType" to "async",
             ))
         }
@@ -374,8 +355,8 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
         pending.success(mapOf(
             "isSuccess" to false,
             "isCanceled" to false,
-            "errorCode" to paymentError.errorCode,
-            "errorMessage" to paymentError.errorInfo,
+            "errorCode" to paymentError.errorCode.toString(),
+            "errorMessage" to paymentError.errorMessage,
         ))
     }
 

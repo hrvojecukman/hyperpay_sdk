@@ -33,7 +33,7 @@ class PaymentResult {
       isSuccess: map['isSuccess'] as bool? ?? false,
       isCanceled: map['isCanceled'] as bool? ?? false,
       resourcePath: map['resourcePath'] as String?,
-      errorCode: map['errorCode'] as String?,
+      errorCode: map['errorCode']?.toString(),
       errorMessage: map['errorMessage'] as String?,
       transactionType: map['transactionType'] as String?,
     );

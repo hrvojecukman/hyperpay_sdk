@@ -32,6 +32,9 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
+  # Temporary: reference pod directly until CDN propagates
+  pod 'hyperpay_sdk_ios', :git => 'https://github.com/hrvojecukman/hyperpay_sdk_ios.git', :tag => '7.4.0'
+
   # HyperPay SDK requires static framework
   $static_framework = ['hyperpay_sdk']
 
