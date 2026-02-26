@@ -52,7 +52,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  hyperpay_sdk: ^1.0.1
+  hyperpay_sdk: ^1.0.2
 ```
 
 Then run:
@@ -188,7 +188,7 @@ cd ios && pod install
 
 Or in Xcode: **Target > Info > URL Types** and add your scheme.
 
-**4. Apple Pay (optional)** — enable the **Apple Pay** capability in Xcode and configure your merchant ID.
+**4. Apple Pay (optional)** — enable the **Apple Pay** capability in Xcode and configure your merchant ID. See the full step-by-step guide: **[Apple Pay Merchant ID Setup](APPLE_PAY_SETUP.md)**.
 
 ---
 
@@ -291,6 +291,8 @@ if (result.isSuccess) {
 ```
 
 ### Apple Pay (iOS only)
+
+> Requires Merchant ID setup in Apple Developer portal. See **[Apple Pay Merchant ID Setup](APPLE_PAY_SETUP.md)** for the full guide.
 
 ```dart
 final result = await HyperpaySdk.payApplePay(

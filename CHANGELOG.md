@@ -1,3 +1,7 @@
+## 1.0.2
+
+- Fix package description length for pub.dev validation
+
 ## 1.0.1
 
 - Redesigned example app with multi-screen layout (splash, home, saved cards)
