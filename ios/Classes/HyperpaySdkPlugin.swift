@@ -122,6 +122,22 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
         pendingResult = result
 
+        // Apply theme color if provided
+        if let themeColorNumber = args["themeColor"] as? NSNumber {
+            let themeColorInt = themeColorNumber.uint32Value
+            let alpha = CGFloat((themeColorInt >> 24) & 0xFF) / 255.0
+            let red   = CGFloat((themeColorInt >> 16) & 0xFF) / 255.0
+            let green = CGFloat((themeColorInt >> 8)  & 0xFF) / 255.0
+            let blue  = CGFloat( themeColorInt        & 0xFF) / 255.0
+            let color = UIColor(red: red, green: green, blue: blue, alpha: alpha)
+
+            let theme = checkoutSettings.theme
+            theme.navigationBarBackgroundColor = color
+            theme.confirmationButtonColor = color
+            theme.accentColor = color
+            theme.cellHighlightedBackgroundColor = color
+        }
+
         // Present checkout
         DispatchQueue.main.async { [weak self] in
             self?.checkoutProvider?.presentCheckout(

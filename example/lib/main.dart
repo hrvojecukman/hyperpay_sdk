@@ -67,7 +67,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<void> _setup() async {
     if (_entityId.isEmpty || _accessToken.isEmpty) {
-      setState(() => _status = 'Missing HYPERPAY_ENTITY_ID or HYPERPAY_ACCESS_TOKEN in .env');
+      setState(() => _status =
+          'Missing HYPERPAY_ENTITY_ID or HYPERPAY_ACCESS_TOKEN in .env');
       return;
     }
 
@@ -85,7 +86,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<String?> _getCheckoutId({bool tokenize = false}) async {
+  Future<String?> _getCheckoutId({
+    bool tokenize = false,
+    List<String> registrationIds = const [],
+  }) async {
     setState(() {
       _isLoading = true;
       _status = 'Requesting checkout ID...';
@@ -99,6 +103,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'paymentType': 'DB',
       };
       if (tokenize) body['createRegistration'] = 'true';
+      for (var i = 0; i < registrationIds.length; i++) {
+        body['registrations[$i].id'] = registrationIds[i];
+      }
 
       print('[HyperPay] Checkout request body: $body');
 
@@ -111,7 +118,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         body: body,
       );
 
-      print('[HyperPay] Checkout response ${response.statusCode}: ${response.body}');
+      print(
+          '[HyperPay] Checkout response ${response.statusCode}: ${response.body}');
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['id'] != null) {
@@ -132,7 +140,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _payReadyUI() async {
-    final checkoutId = await _getCheckoutId();
+    final themeColor = Theme.of(context).colorScheme.primary.toARGB32();
+    final prefs = await SharedPreferences.getInstance();
+    final savedIds = prefs.getStringList('saved_registration_ids') ?? [];
+    final checkoutId = await _getCheckoutId(registrationIds: savedIds);
     if (checkoutId == null) return;
 
     setState(() => _isLoading = true);
@@ -141,8 +152,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         checkoutId: checkoutId,
         brands: ['VISA', 'MASTER', 'MADA'],
         shopperResultUrl: shopperResultUrl,
+        themeColor: themeColor,
       );
       setState(() => _status = _formatResult(result));
+      _showResultSnackBar(result);
     } catch (e) {
       setState(() => _status = 'ReadyUI error: $e');
     } finally {
@@ -175,6 +188,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       print('[HyperPay] CustomUI result: ${result.toMap()}');
       setState(() => _status = _formatResult(result));
+      _showResultSnackBar(result);
 
       if (result.isSuccess && _saveCard) {
         await _extractAndSaveRegistration(checkoutId);
@@ -203,12 +217,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final registrationId = data['registrationId'] as String?;
       if (registrationId == null || registrationId.isEmpty) return;
 
+      final brand = data['paymentBrand'] as String? ?? '';
+      final last4 = data['card']?['last4Digits'] as String? ?? '';
+      final cardKey = '$brand:$last4';
+
       final prefs = await SharedPreferences.getInstance();
       final ids = prefs.getStringList('saved_registration_ids') ?? [];
-      if (!ids.contains(registrationId)) {
+      final cardKeys = prefs.getStringList('saved_card_keys') ?? [];
+
+      // Replace existing registration for the same card
+      final existingIndex = cardKeys.indexOf(cardKey);
+      if (existingIndex != -1 && existingIndex < ids.length) {
+        ids[existingIndex] = registrationId;
+      } else {
         ids.add(registrationId);
-        await prefs.setStringList('saved_registration_ids', ids);
+        cardKeys.add(cardKey);
       }
+      await prefs.setStringList('saved_registration_ids', ids);
+      await prefs.setStringList('saved_card_keys', cardKeys);
 
       if (mounted) {
         setState(() {
@@ -237,6 +263,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         companyName: 'Example Company',
       );
       setState(() => _status = _formatResult(result));
+      _showResultSnackBar(result);
     } catch (e) {
       setState(() => _status = 'Apple Pay error: $e');
     } finally {
@@ -317,7 +344,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Status', style: Theme.of(context).textTheme.titleSmall),
+                    Text('Status',
+                        style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
                     SelectableText(_status),
                   ],

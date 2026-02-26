@@ -45,6 +45,9 @@ class HyperpaySdk {
   /// - [googlePayConfig]: Google Pay configuration (Android only).
   /// - [applePayConfig]: Apple Pay configuration (iOS only).
   /// - [lang]: Language code for the checkout UI (e.g. `'en'`, `'ar'`).
+  /// - [themeColor]: ARGB color int (`Color.value`) to tint the checkout UI.
+  ///   On iOS this sets the window tint color (nav bar, buttons, controls).
+  ///   On Android this has no effect — customize via a theme in `styles.xml`.
   ///
   /// Returns a [PaymentResult] with the transaction outcome.
   static Future<PaymentResult> checkoutReadyUI({
@@ -54,6 +57,7 @@ class HyperpaySdk {
     GooglePayConfig? googlePayConfig,
     ApplePayConfig? applePayConfig,
     String? lang,
+    int? themeColor,
   }) {
     return HyperpaySdkMethodChannel.checkoutReadyUI(
       checkoutId: checkoutId,
@@ -62,6 +66,7 @@ class HyperpaySdk {
       googlePayConfig: googlePayConfig,
       applePayConfig: applePayConfig,
       lang: lang,
+      themeColor: themeColor,
     );
   }
 

@@ -20,6 +20,7 @@ class HyperpaySdkMethodChannel {
     GooglePayConfig? googlePayConfig,
     ApplePayConfig? applePayConfig,
     String? lang,
+    int? themeColor,
   }) async {
     try {
       final result =
@@ -30,6 +31,7 @@ class HyperpaySdkMethodChannel {
         if (googlePayConfig != null) 'googlePayConfig': googlePayConfig.toMap(),
         if (applePayConfig != null) 'applePayConfig': applePayConfig.toMap(),
         if (lang != null) 'lang': lang,
+        if (themeColor != null) 'themeColor': themeColor,
       });
       if (result == null) {
         return PaymentResult.canceled();

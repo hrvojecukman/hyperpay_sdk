@@ -116,10 +116,12 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
 
       final checkoutId = checkoutData['id'] as String;
 
+      final themeColor = Theme.of(context).colorScheme.primary.toARGB32();
       final result = await HyperpaySdk.checkoutReadyUI(
         checkoutId: checkoutId,
         brands: ['VISA', 'MASTER', 'MADA'],
         shopperResultUrl: _shopperResultUrl,
+        themeColor: themeColor,
       );
 
       if (result.isSuccess) {
