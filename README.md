@@ -414,6 +414,42 @@ See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for 
 
 ---
 
+## Customizing UI Colors
+
+The ReadyUI checkout screen can be themed to match your app's branding.
+
+### iOS
+
+Pass the `themeColor` parameter to `checkoutReadyUI`. This tints the navigation bar, buttons, and controls:
+
+```dart
+final result = await HyperpaySdk.checkoutReadyUI(
+  checkoutId: checkoutId,
+  brands: ['VISA', 'MASTER', 'MADA'],
+  shopperResultUrl: 'com.your.app.payments',
+  themeColor: const Color(0xFF6200EE).toARGB32(), // your brand color
+);
+```
+
+### Android
+
+The `themeColor` parameter has no effect on Android. Instead, override the SDK's theme in your `android/app/src/main/res/values/styles.xml`:
+
+```xml
+<!-- Override the HyperPay checkout theme -->
+<style name="OpwaTheme" parent="Theme.MaterialComponents.Light">
+    <item name="colorPrimary">@color/your_primary</item>
+    <item name="colorPrimaryDark">@color/your_primary_dark</item>
+    <item name="colorAccent">@color/your_accent</item>
+</style>
+```
+
+### CustomUI
+
+With CustomUI you build the payment form yourself, so you have full control over colors using Flutter's `ThemeData`.
+
+---
+
 ## Troubleshooting
 
 ### Android: `ClassNotFoundException` or missing SDK classes
