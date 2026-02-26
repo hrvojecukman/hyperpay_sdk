@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hyperpay_sdk/hyperpay_sdk.dart';
 
 import '../services/payment_service.dart';
@@ -42,8 +43,7 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
   final _cardNumberController =
       TextEditingController(text: '4200000000000000');
   final _holderController = TextEditingController(text: 'John Doe');
-  final _expiryMonthController = TextEditingController(text: '12');
-  final _expiryYearController = TextEditingController(text: '2027');
+  final _expiryController = TextEditingController(text: '12/27');
   final _cvvController = TextEditingController(text: '123');
 
   late bool _saveCard = widget.saveOnly;
@@ -53,16 +53,24 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
   void dispose() {
     _cardNumberController.dispose();
     _holderController.dispose();
-    _expiryMonthController.dispose();
-    _expiryYearController.dispose();
+    _expiryController.dispose();
     _cvvController.dispose();
     super.dispose();
+  }
+
+  ({String month, String year}) _parseExpiry() {
+    final parts = _expiryController.text.trim().split('/');
+    final month = parts.isNotEmpty ? parts[0].padLeft(2, '0') : '';
+    final yearRaw = parts.length > 1 ? parts[1] : '';
+    final year = yearRaw.length == 2 ? '20$yearRaw' : yearRaw;
+    return (month: month, year: year);
   }
 
   Future<void> _pay() async {
     setState(() => _isLoading = true);
 
     try {
+      final expiry = _parseExpiry();
       final checkoutId = await PaymentService.getCheckoutId(
         amount: widget.saveOnly ? '0.00' : widget.amount,
         paymentType: widget.saveOnly ? 'PA' : 'DB',
@@ -73,7 +81,7 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
       print('[HyperPay] CustomUI params: checkoutId=$checkoutId, '
           'brand=VISA, card=${_cardNumberController.text.trim()}, '
           'holder=${_holderController.text.trim()}, '
-          'expiry=${_expiryMonthController.text.trim()}/${_expiryYearController.text.trim()}, '
+          'expiry=${expiry.month}/${expiry.year}, '
           'shopperResultUrl=${PaymentService.shopperResultUrl}, saveCard=$_saveCard');
 
       final result = await HyperpaySdk.payCustomUI(
@@ -81,8 +89,8 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
         brand: 'VISA',
         cardNumber: _cardNumberController.text.trim(),
         holder: _holderController.text.trim(),
-        expiryMonth: _expiryMonthController.text.trim(),
-        expiryYear: _expiryYearController.text.trim(),
+        expiryMonth: expiry.month,
+        expiryYear: expiry.year,
         cvv: _cvvController.text.trim(),
         shopperResultUrl: PaymentService.shopperResultUrl,
       );
@@ -167,24 +175,15 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
             children: [
               Expanded(
                 child: TextField(
-                  controller: _expiryMonthController,
+                  controller: _expiryController,
                   decoration: const InputDecoration(
-                    labelText: 'Month',
+                    labelText: 'MM/YY',
+                    hintText: '12/27',
                     border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.calendar_month),
                   ),
                   keyboardType: TextInputType.number,
-                  enabled: !_isLoading,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _expiryYearController,
-                  decoration: const InputDecoration(
-                    labelText: 'Year',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
+                  inputFormatters: [_ExpiryInputFormatter()],
                   enabled: !_isLoading,
                 ),
               ),
@@ -195,6 +194,7 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
                   decoration: const InputDecoration(
                     labelText: 'CVV',
                     border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock),
                   ),
                   keyboardType: TextInputType.number,
                   obscureText: true,
@@ -227,6 +227,26 @@ class _CustomUIBottomSheetState extends State<CustomUIBottomSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ExpiryInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length && i < 4; i++) {
+      if (i == 2) buf.write('/');
+      buf.write(digits[i]);
+    }
+    final text = buf.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }
