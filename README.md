@@ -18,18 +18,18 @@ Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for 
 
 ## Screenshots
 
-| Home | ReadyUI | Custom UI | Apple Pay | Saved Cards |
-|------|---------|-----------|-----------|-------------|
+| Home                                                                                           | ReadyUI                                                                                               | Custom UI                                                                                                | Apple Pay                                                                                                | Saved Cards                                                                                                  |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | ![Home](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/home.png) | ![ReadyUI](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/ready_ui.png) | ![Custom UI](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/custom_ui.png) | ![Apple Pay](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/apple_pay.png) | ![Saved Cards](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/saved_cards.png) |
 
 ## Requirements
 
-| Platform | Minimum Version        |
-|----------|------------------------|
-| iOS      | 13.0                   |
-| Android  | API 24 (Android 7.0)   |
-| Flutter  | 3.0+                   |
-| Dart     | 3.0+                   |
+| Platform | Minimum Version      |
+| -------- | -------------------- |
+| iOS      | 13.0                 |
+| Android  | API 24 (Android 7.0) |
+| Flutter  | 3.0+                 |
+| Dart     | 3.0+                 |
 
 ---
 
@@ -52,7 +52,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  hyperpay_sdk: ^1.0.0
+  hyperpay_sdk: ^1.0.1
 ```
 
 Then run:
@@ -335,7 +335,7 @@ In production, **never** store your HyperPay access token in the client app. The
 1. App requests a checkout from your server (amount, currency, etc.)
 2. Your server calls `POST https://oppwa.com/v1/checkouts` with your credentials
 3. Your server returns the `checkoutId` to the app
-4. *(HyperPay responds to your server)*
+4. _(HyperPay responds to your server)_
 5. App passes `checkoutId` to `HyperpaySdk.checkoutReadyUI(...)` or `payCustomUI(...)`
 6. SDK handles the payment flow and returns a `PaymentResult`
 7. App sends `resourcePath` to your server for verification
@@ -365,18 +365,18 @@ See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for 
 
 ### `HyperpaySdk`
 
-| Method                 | Description                                                |
-|------------------------|------------------------------------------------------------|
-| `setup(mode:)`         | Initialize the SDK. Call once before any payment.          |
-| `checkoutReadyUI(...)` | Launch the pre-built checkout UI. Returns `PaymentResult`. |
-| `payCustomUI(...)`     | Submit a card payment from your own form. Returns `PaymentResult`. |
-| `payApplePay(...)`     | Submit an Apple Pay payment (iOS only). Returns `PaymentResult`. |
-| `getPaymentStatus(...)` | Get checkout info for verification. Returns `CheckoutInfo`. |
+| Method                  | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `setup(mode:)`          | Initialize the SDK. Call once before any payment.                  |
+| `checkoutReadyUI(...)`  | Launch the pre-built checkout UI. Returns `PaymentResult`.         |
+| `payCustomUI(...)`      | Submit a card payment from your own form. Returns `PaymentResult`. |
+| `payApplePay(...)`      | Submit an Apple Pay payment (iOS only). Returns `PaymentResult`.   |
+| `getPaymentStatus(...)` | Get checkout info for verification. Returns `CheckoutInfo`.        |
 
 ### `PaymentResult`
 
 | Field             | Type      | Description                                |
-|-------------------|-----------|--------------------------------------------|
+| ----------------- | --------- | ------------------------------------------ |
 | `isSuccess`       | `bool`    | Whether the payment was successful         |
 | `isCanceled`      | `bool`    | Whether the user canceled                  |
 | `resourcePath`    | `String?` | Resource path for server-side verification |
@@ -386,16 +386,16 @@ See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for 
 
 ### `CheckoutInfo`
 
-| Field          | Type      | Description                            |
-|----------------|-----------|----------------------------------------|
-| `status`       | `String?` | Payment status (e.g. `"CHARGED"`)      |
-| `paymentBrand` | `String?` | Brand used (e.g. `"VISA"`)            |
-| `rawResponse`  | `Map?`    | Raw SDK response data                  |
+| Field          | Type      | Description                       |
+| -------------- | --------- | --------------------------------- |
+| `status`       | `String?` | Payment status (e.g. `"CHARGED"`) |
+| `paymentBrand` | `String?` | Brand used (e.g. `"VISA"`)        |
+| `rawResponse`  | `Map?`    | Raw SDK response data             |
 
 ### `PaymentMode`
 
 | Value  | Description            |
-|--------|------------------------|
+| ------ | ---------------------- |
 | `test` | Sandbox environment    |
 | `live` | Production environment |
 
@@ -403,14 +403,14 @@ See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for 
 
 ## Supported Payment Brands
 
-| Brand       | ReadyUI          | CustomUI         | Notes                       |
-|-------------|------------------|------------------|-----------------------------|
-| `VISA`      | Yes              | Yes              |                             |
-| `MASTER`    | Yes              | Yes              |                             |
-| `MADA`      | Yes              | Yes              | Saudi Arabia debit network  |
-| `STC_PAY`   | Yes              | No               |                             |
+| Brand       | ReadyUI          | CustomUI          | Notes                      |
+| ----------- | ---------------- | ----------------- | -------------------------- |
+| `VISA`      | Yes              | Yes               |                            |
+| `MASTER`    | Yes              | Yes               |                            |
+| `MADA`      | Yes              | Yes               | Saudi Arabia debit network |
+| `STC_PAY`   | Yes              | No                |                            |
 | `APPLEPAY`  | Yes (via config) | Via `payApplePay` | iOS only                   |
-| `GOOGLEPAY` | Yes (via config) | N/A              | Android only                |
+| `GOOGLEPAY` | Yes (via config) | N/A               | Android only               |
 
 ---
 
@@ -453,19 +453,24 @@ With CustomUI you build the payment form yourself, so you have full control over
 ## Troubleshooting
 
 ### Android: `ClassNotFoundException` or missing SDK classes
+
 Ensure JitPack is added to your repositories (`maven { url 'https://jitpack.io' }`). Run `flutter clean && flutter pub get` and rebuild.
 
 ### iOS: Framework not found
+
 1. Run `cd ios && pod install --repo-update`
 2. Clean build: `flutter clean && flutter pub get`
 
 ### iOS Simulator: 3DS crashes
+
 The **deploy** (release) 3DS framework doesn't include simulator slices. Simulator testing may require the debug 3DS framework.
 
 ### Async payments not returning
+
 Ensure the URL scheme is correctly configured in both your native project and matches the `shopperResultUrl` parameter exactly (lowercase, no special characters).
 
 ### Google Pay not showing
+
 1. Add the wallet meta-data to `AndroidManifest.xml`
 2. Ensure `play-services-wallet` dependency is present
 3. Google Pay requires a real device (not emulator) in most cases
