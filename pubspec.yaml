@@ -1,6 +1,6 @@
 name: hyperpay_sdk
 description: "Flutter plugin for HyperPay (OPPWA) Mobile SDK v7.4.0. ReadyUI, CustomUI, Apple Pay, Google Pay, MADA, tokenization, and 3DS2."
-version: 1.0.3
+version: 1.0.4
 homepage: https://github.com/hrvojecukman/hyperpay_sdk
 repository: https://github.com/hrvojecukman/hyperpay_sdk
 issue_tracker: https://github.com/hrvojecukman/hyperpay_sdk/issues

@@ -1,3 +1,7 @@
+## 1.0.4
+
+- Fix Apple Pay cancel hanging forever on iOS — `pendingResult` was never called when user dismissed the payment sheet
+
 ## 1.0.3
 
 - Added Apple Pay Merchant ID configuration guide with screenshots

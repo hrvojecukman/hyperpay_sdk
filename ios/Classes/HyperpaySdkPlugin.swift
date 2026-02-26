@@ -469,10 +469,12 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
     ) {
         controller.dismiss(animated: true) { [weak self] in
             guard let self = self else { return }
-            if self.pendingResult != nil && self.pendingApplePayParams == nil {
-                // User cancelled without authorizing
+            // If pendingResult is still set, no authorization happened — user canceled
+            if self.pendingResult != nil {
                 let pending = self.pendingResult
                 self.pendingResult = nil
+                self.pendingApplePayParams = nil
+                self.pendingApplePayProvider = nil
                 pending?([
                     "isSuccess": false,
                     "isCanceled": true,
