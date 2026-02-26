@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:hyperpay_sdk/hyperpay_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'services/payment_service.dart';
+
 const _prefsKey = 'saved_registration_ids';
-const _shopperResultUrl = 'com.example.hyperpaysdk';
 
 class SavedCardsScreen extends StatefulWidget {
   const SavedCardsScreen({super.key});
@@ -20,8 +20,8 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
   bool _isLoading = true;
   String? _error;
 
-  String get _entityId => dotenv.env['HYPERPAY_ENTITY_ID'] ?? '';
-  String get _accessToken => dotenv.env['HYPERPAY_ACCESS_TOKEN'] ?? '';
+  String get _entityId => PaymentService.entityId;
+  String get _accessToken => PaymentService.accessToken;
 
   @override
   void initState() {
@@ -86,6 +86,7 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
   }
 
   Future<void> _payWithCard(_SavedCard card) async {
+    final themeColor = Theme.of(context).colorScheme.primary.toARGB32();
     setState(() => _isLoading = true);
 
     try {
@@ -116,11 +117,10 @@ class _SavedCardsScreenState extends State<SavedCardsScreen> {
 
       final checkoutId = checkoutData['id'] as String;
 
-      final themeColor = Theme.of(context).colorScheme.primary.toARGB32();
       final result = await HyperpaySdk.checkoutReadyUI(
         checkoutId: checkoutId,
         brands: ['VISA', 'MASTER', 'MADA'],
-        shopperResultUrl: _shopperResultUrl,
+        shopperResultUrl: PaymentService.shopperResultUrl,
         themeColor: themeColor,
       );
 

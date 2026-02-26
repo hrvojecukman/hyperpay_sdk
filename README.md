@@ -16,6 +16,12 @@ Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for 
 - **Async payment flows** — Redirect-based payments (e.g. 3DS, bank redirects)
 - **Test and Live modes**
 
+## Screenshots
+
+| Splash | Home | Custom UI | Saved Cards |
+|--------|------|-----------|-------------|
+| ![Splash](screenshots/splash.png) | ![Home](screenshots/home.png) | ![Custom UI](screenshots/custom_ui.png) | ![Saved Cards](screenshots/saved_cards.png) |
+
 ## Requirements
 
 | Platform | Minimum Version        |
@@ -183,6 +189,28 @@ cd ios && pod install
 Or in Xcode: **Target > Info > URL Types** and add your scheme.
 
 **4. Apple Pay (optional)** — enable the **Apple Pay** capability in Xcode and configure your merchant ID.
+
+---
+
+## Running the Example App
+
+```sh
+cd example
+cp .env.example .env
+```
+
+Edit `.env` with your HyperPay credentials:
+
+```
+HYPERPAY_ENTITY_ID=your_entity_id_here
+HYPERPAY_ACCESS_TOKEN=your_access_token_here
+```
+
+Then run:
+
+```sh
+flutter run
+```
 
 ---
 
