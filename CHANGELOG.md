@@ -1,3 +1,8 @@
+## 1.0.3
+
+- Added Apple Pay Merchant ID configuration guide with screenshots
+- Fixed README links to use absolute URLs for pub.dev compatibility
+
 ## 1.0.2
 
 - Fix package description length for pub.dev validation
