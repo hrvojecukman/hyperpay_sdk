@@ -1,4 +1,4 @@
-## 7.4.0
+## 1.0.0
 
 * Initial release wrapping HyperPay OPPWA Mobile SDK v7.4.0
 * ReadyUI and CustomUI payment flows
