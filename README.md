@@ -18,9 +18,9 @@ Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for 
 
 ## Screenshots
 
-| Splash | Home | Custom UI | Saved Cards |
-|--------|------|-----------|-------------|
-| ![Splash](screenshots/splash.png) | ![Home](screenshots/home.png) | ![Custom UI](screenshots/custom_ui.png) | ![Saved Cards](screenshots/saved_cards.png) |
+| Home | ReadyUI | Custom UI | Apple Pay | Saved Cards |
+|------|---------|-----------|-----------|-------------|
+| ![Home](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/home.png) | ![ReadyUI](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/ready_ui.png) | ![Custom UI](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/custom_ui.png) | ![Apple Pay](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/apple_pay.png) | ![Saved Cards](https://raw.githubusercontent.com/hrvojecukman/hyperpay_sdk/main/screenshots/saved_cards.png) |
 
 ## Requirements
 
@@ -317,17 +317,47 @@ print('Status: ${info.status}');
 
 ---
 
-## Obtaining a Checkout ID
+## Production Integration
 
-Before calling any payment method, you must obtain a checkout ID from your backend server by calling the HyperPay Preparation API:
+In production, **never** store your HyperPay access token in the client app. The example app calls the HyperPay API directly for convenience, but a real app should use a backend:
 
 ```
-POST https://eu-test.oppwa.com/v1/checkouts
+┌─────────┐         ┌──────────┐         ┌──────────────┐
+│  App    │──(1)──▶│  Your    │──(2)──▶│  HyperPay    │
+│ (Flutter)│◀──(3)──│  Server  │◀──(4)──│  API         │
+│         │         │          │         │              │
+│  SDK ───(5)────────────────────────▶│  Payment     │
+│         │◀──(6)──────────────────────│  Gateway     │
+│         │──(7)──▶│  Verify  │──(8)──▶│              │
+└─────────┘         └──────────┘         └──────────────┘
 ```
 
-With parameters: `entityId`, `amount`, `currency`, `paymentType`, etc.
+1. App requests a checkout from your server (amount, currency, etc.)
+2. Your server calls `POST https://oppwa.com/v1/checkouts` with your credentials
+3. Your server returns the `checkoutId` to the app
+4. *(HyperPay responds to your server)*
+5. App passes `checkoutId` to `HyperpaySdk.checkoutReadyUI(...)` or `payCustomUI(...)`
+6. SDK handles the payment flow and returns a `PaymentResult`
+7. App sends `resourcePath` to your server for verification
+8. Your server calls HyperPay's server-to-server API to confirm the payment
 
-See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for full details.
+```dart
+// In your app — get checkoutId from YOUR backend, not HyperPay directly
+final checkoutId = await yourApi.createCheckout(amount: 100.0, currency: 'SAR');
+
+final result = await HyperpaySdk.checkoutReadyUI(
+  checkoutId: checkoutId,
+  brands: ['VISA', 'MASTER', 'MADA'],
+  shopperResultUrl: 'com.your.app.payments',
+);
+
+if (result.isSuccess) {
+  // Verify on your server
+  await yourApi.verifyPayment(resourcePath: result.resourcePath!);
+}
+```
+
+See the [HyperPay documentation](https://wordpresshyperpay.docs.oppwa.com/) for full API details.
 
 ---
 
