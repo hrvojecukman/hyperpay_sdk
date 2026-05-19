@@ -504,6 +504,13 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
             return
         }
 
+        // HyperPay requires shopperResultURL on payment submission. Card flows
+        // set it on OPPCardPaymentParams; the Apple Pay flow was missing it,
+        // causing "200.300.404 invalid or missing parameter" rejections.
+        if let shopperUrl = self.shopperResultUrl {
+            finalParams.shopperResultURL = "\(shopperUrl)://callback"
+        }
+
         let transaction = OPPTransaction(paymentParams: finalParams)
         provider.submitTransaction(transaction) { [weak self] (transaction, error) in
             guard let self = self else { return }

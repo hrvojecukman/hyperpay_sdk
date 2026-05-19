@@ -1,3 +1,7 @@
+## 1.0.5
+
+- Fix Apple Pay on iOS rejected by HyperPay with `200.300.404 invalid or missing parameter` — `shopperResultURL` was set on the card path but not on `OPPApplePayPaymentParams` before submission, so wallet payments reached HyperPay without it. Now mirrors the card flow and assigns `shopperResultURL` on the Apple Pay params before submitting the transaction.
+
 ## 1.0.4
 
 - Fix Apple Pay cancel hanging forever on iOS — `pendingResult` was never called when user dismissed the payment sheet
