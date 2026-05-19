@@ -302,6 +302,7 @@ final result = await HyperpaySdk.payApplePay(
   currencyCode: 'SAR',
   amount: 100.0,
   companyName: 'Your Company',
+  shopperResultUrl: 'com.your.app.payments',
 );
 ```
 

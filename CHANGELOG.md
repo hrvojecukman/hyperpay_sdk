@@ -1,6 +1,12 @@
+## 2.0.0
+
+**Breaking change**: `HyperpaySdk.payApplePay()` now requires `shopperResultUrl`.
+
+The earlier 1.0.5 fix added `shopperResultURL` assignment on the iOS Apple Pay params, but the value was never plumbed through from Dart — the `payApplePay` Dart method didn't accept a `shopperResultUrl` argument, so the iOS plugin always saw a nil value and submitted Apple Pay payments to HyperPay with no `shopperResultURL`, causing `200.300.404 invalid or missing parameter`. Now mirrors the Ready UI flow: callers must pass `shopperResultUrl`, the Dart→iOS bridge forwards it, the iOS handler captures it, and the submission delegate assigns it on `OPPApplePayPaymentParams` before `submitTransaction`.
+
 ## 1.0.5
 
-- Fix Apple Pay on iOS rejected by HyperPay with `200.300.404 invalid or missing parameter` — `shopperResultURL` was set on the card path but not on `OPPApplePayPaymentParams` before submission, so wallet payments reached HyperPay without it. Now mirrors the card flow and assigns `shopperResultURL` on the Apple Pay params before submitting the transaction.
+- Fix Apple Pay on iOS rejected by HyperPay with `200.300.404 invalid or missing parameter` — `shopperResultURL` was set on the card path but not on `OPPApplePayPaymentParams` before submission, so wallet payments reached HyperPay without it. Now mirrors the card flow and assigns `shopperResultURL` on the Apple Pay params before submitting the transaction. (Incomplete: see 2.0.0.)
 
 ## 1.0.4
 

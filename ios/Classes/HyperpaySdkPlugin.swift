@@ -306,10 +306,16 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
               let countryCode = args["countryCode"] as? String,
               let currencyCode = args["currencyCode"] as? String,
               let amount = args["amount"] as? Double,
-              let companyName = args["companyName"] as? String else {
+              let companyName = args["companyName"] as? String,
+              let shopperUrl = args["shopperResultUrl"] as? String else {
             result(FlutterError(code: "INVALID_ARGS", message: "All Apple Pay fields are required", details: nil))
             return
         }
+
+        // Captured so paymentAuthorizationViewController(_:didAuthorizePayment:)
+        // can set shopperResultURL on OPPApplePayPaymentParams before submission
+        // — HyperPay rejects checkouts that have no shopperResultURL.
+        self.shopperResultUrl = shopperUrl
 
         guard let provider = paymentProvider else {
             result(FlutterError(code: "NOT_INITIALIZED", message: "Call setup() before making payments", details: nil))

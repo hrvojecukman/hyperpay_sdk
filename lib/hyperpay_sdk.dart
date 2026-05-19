@@ -124,6 +124,7 @@ class HyperpaySdk {
     required String currencyCode,
     required double amount,
     required String companyName,
+    required String shopperResultUrl,
   }) {
     return HyperpaySdkMethodChannel.payApplePay(
       checkoutId: checkoutId,
@@ -132,6 +133,7 @@ class HyperpaySdk {
       currencyCode: currencyCode,
       amount: amount,
       companyName: companyName,
+      shopperResultUrl: shopperResultUrl,
     );
   }
 

@@ -88,6 +88,7 @@ class HyperpaySdkMethodChannel {
     required String currencyCode,
     required double amount,
     required String companyName,
+    required String shopperResultUrl,
   }) async {
     try {
       final result =
@@ -98,6 +99,7 @@ class HyperpaySdkMethodChannel {
         'currencyCode': currencyCode,
         'amount': amount,
         'companyName': companyName,
+        'shopperResultUrl': shopperResultUrl,
       });
       if (result == null) {
         return PaymentResult.canceled();
