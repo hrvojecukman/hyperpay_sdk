@@ -1,3 +1,7 @@
+## 2.0.1
+
+- Fix example app failing to build after the 2.0.0 breaking change — the example's Apple Pay screen still called `payApplePay` without the now-required `shopperResultUrl`, causing a compile error. No library changes.
+
 ## 2.0.0
 
 **Breaking change**: `HyperpaySdk.payApplePay()` now requires `shopperResultUrl`.

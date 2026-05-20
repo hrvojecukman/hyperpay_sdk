@@ -111,9 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
         merchantId: 'merchant.com.example.app',
         countryCode: 'SA',
         currencyCode: 'SAR',
-        amount:
-            double.tryParse(_amountController.text.trim()) ?? 10.0,
+        amount: double.tryParse(_amountController.text.trim()) ?? 10.0,
         companyName: 'Example Company',
+        shopperResultUrl: PaymentService.shopperResultUrl,
       );
       setState(() => _status = PaymentService.formatResult(result));
       _showResultSnackBar(result);
