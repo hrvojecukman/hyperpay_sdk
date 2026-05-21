@@ -1,9 +1,9 @@
 Pod::Spec.new do |s|
   s.name             = 'hyperpay_sdk'
-  s.version          = '7.4.0'
-  s.summary          = 'Flutter plugin wrapping HyperPay (OPPWA) Mobile SDK v7.4.0.'
+  s.version          = '7.8.1'
+  s.summary          = 'Flutter plugin wrapping HyperPay (OPPWA) Mobile SDK v7.8.1.'
   s.description      = <<-DESC
-Flutter plugin for integrating HyperPay (OPPWA) Mobile SDK v7.4.0 on iOS.
+Flutter plugin for integrating HyperPay (OPPWA) Mobile SDK v7.8.1 on iOS.
 Supports ReadyUI, CustomUI, Apple Pay, tokenization, and 3DS2.
                        DESC
   s.homepage         = 'https://github.com/hrvojecukman/hyperpay_sdk'
@@ -17,7 +17,7 @@ Supports ReadyUI, CustomUI, Apple Pay, tokenization, and 3DS2.
   s.swift_version    = '5.0'
 
   s.dependency 'Flutter'
-  s.dependency 'hyperpay_sdk_ios', '7.4.0'
+  s.dependency 'hyperpay_sdk_ios', '7.8.1'
 
   # System frameworks required by the SDK
   s.frameworks = [

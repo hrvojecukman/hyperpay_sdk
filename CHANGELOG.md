@@ -1,3 +1,7 @@
+## 2.2.0
+
+- **Upgrade** underlying HyperPay (OPPWA) Mobile SDK from `7.4.0` → `7.8.1` on both iOS and Android. No public Dart API changes. The `OPPWAMobile` and `ipworks3ds_sdk` frameworks are updated; ipworks3ds versions on iOS are now `9485`, Android `9469`. Transitive Android dependencies are unchanged.
+
 ## 2.1.0
 
 - Add `HyperpaySdk.requestBinInfo(checkoutId, bin)` — wraps the OPPWA SDK's BIN service so callers can use HyperPay's authoritative BIN database to detect MADA (and other brands) instead of maintaining their own hardcoded BIN list. Returns `HyperpayBinInfo { brands, binType, type }` with a convenience `isMada` getter. Use this on add-card to route MADA cards through the DB flow and avoid PA-rail declines on Saudi-issued co-branded cards.
