@@ -3,7 +3,7 @@
 [![pub package](https://img.shields.io/pub/v/hyperpay_sdk.svg)](https://pub.dev/packages/hyperpay_sdk)
 [![license](https://img.shields.io/github/license/hrvojecukman/hyperpay_sdk.svg)](https://github.com/hrvojecukman/hyperpay_sdk/blob/main/LICENSE)
 
-Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.4.0** for Android and iOS.
+Flutter plugin wrapping the official **HyperPay (OPPWA) Mobile SDK v7.8.1** for Android and iOS.
 
 ## Features
 
@@ -52,7 +52,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  hyperpay_sdk: ^1.0.4
+  hyperpay_sdk: ^2.2.0
 ```
 
 Then run:
