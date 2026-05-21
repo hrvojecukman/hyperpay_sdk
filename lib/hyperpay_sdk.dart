@@ -137,6 +137,30 @@ class HyperpaySdk {
     );
   }
 
+  /// Look up brand/type info for a card BIN via HyperPay's BIN service.
+  ///
+  /// Use this on the add-card screen as soon as the user has typed the first
+  /// 6 digits — the result is authoritative (same database HyperPay uses on
+  /// its backend) and lets you route MADA cards through the DB flow instead
+  /// of being declined on PA.
+  ///
+  /// - [checkoutId]: A valid checkout ID. The BIN endpoint is keyed on a
+  ///   checkout, so this must already have been created on your server. A
+  ///   `0.00` setup checkout is fine.
+  /// - [bin]: First 6+ digits of the card number.
+  ///
+  /// Returns a [HyperpayBinInfo] with `brands` (e.g. `["MADA"]`), `binType`,
+  /// and `type`. Returns an empty result if the BIN is unknown.
+  static Future<HyperpayBinInfo> requestBinInfo({
+    required String checkoutId,
+    required String bin,
+  }) {
+    return HyperpaySdkMethodChannel.requestBinInfo(
+      checkoutId: checkoutId,
+      bin: bin,
+    );
+  }
+
   /// Get the payment status for a completed checkout.
   ///
   /// - [checkoutId]: The checkout ID to check.

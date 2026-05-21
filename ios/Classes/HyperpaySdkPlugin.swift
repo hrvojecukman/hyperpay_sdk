@@ -39,6 +39,8 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             handlePayCustomUI(call, result: result)
         case "payApplePay":
             handlePayApplePay(call, result: result)
+        case "requestBinInfo":
+            handleRequestBinInfo(call, result: result)
         case "getPaymentStatus":
             handleGetPaymentStatus(call, result: result)
         default:
@@ -363,6 +365,48 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
     private var pendingApplePayParams: OPPApplePayPaymentParams?
     private var pendingApplePayProvider: OPPPaymentProvider?
+
+    // MARK: - BIN Info
+
+    private func handleRequestBinInfo(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let checkoutId = args["checkoutId"] as? String,
+              let bin = args["bin"] as? String else {
+            result(FlutterError(code: "INVALID_ARGS", message: "checkoutId and bin are required", details: nil))
+            return
+        }
+
+        guard let provider = paymentProvider else {
+            result(FlutterError(code: "NOT_INITIALIZED", message: "Call setup() before requesting BIN info", details: nil))
+            return
+        }
+
+        provider.requestBinInfo(withCheckoutID: checkoutId, bin: bin) { binInfo, error in
+            if let error = error as NSError? {
+                result(FlutterError(
+                    code: "BIN_INFO_ERROR",
+                    message: error.localizedDescription,
+                    details: "domain=\(error.domain), code=\(error.code)"
+                ))
+                return
+            }
+
+            guard let info = binInfo else {
+                result([
+                    "brands": [String](),
+                    "binType": NSNull(),
+                    "type": NSNull(),
+                ] as [String: Any])
+                return
+            }
+
+            result([
+                "brands": info.brands,
+                "binType": info.binType ?? NSNull(),
+                "type": info.type ?? NSNull(),
+            ] as [String: Any])
+        }
+    }
 
     // MARK: - Payment Status
 

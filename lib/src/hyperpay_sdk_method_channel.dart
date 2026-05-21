@@ -113,6 +113,21 @@ class HyperpaySdkMethodChannel {
     }
   }
 
+  static Future<HyperpayBinInfo> requestBinInfo({
+    required String checkoutId,
+    required String bin,
+  }) async {
+    final result =
+        await _channel.invokeMethod<Map<dynamic, dynamic>>('requestBinInfo', {
+      'checkoutId': checkoutId,
+      'bin': bin,
+    });
+    if (result == null) {
+      return const HyperpayBinInfo(brands: <String>[]);
+    }
+    return HyperpayBinInfo.fromMap(Map<String, dynamic>.from(result));
+  }
+
   static Future<CheckoutInfo> getPaymentStatus({
     required String checkoutId,
     String? resourcePath,

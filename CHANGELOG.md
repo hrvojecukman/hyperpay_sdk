@@ -1,3 +1,7 @@
+## 2.1.0
+
+- Add `HyperpaySdk.requestBinInfo(checkoutId, bin)` — wraps the OPPWA SDK's BIN service so callers can use HyperPay's authoritative BIN database to detect MADA (and other brands) instead of maintaining their own hardcoded BIN list. Returns `HyperpayBinInfo { brands, binType, type }` with a convenience `isMada` getter. Use this on add-card to route MADA cards through the DB flow and avoid PA-rail declines on Saudi-issued co-branded cards.
+
 ## 2.0.1
 
 - Fix example app failing to build after the 2.0.0 breaking change — the example's Apple Pay screen still called `payApplePay` without the now-required `shopperResultUrl`, causing a compile error. No library changes.

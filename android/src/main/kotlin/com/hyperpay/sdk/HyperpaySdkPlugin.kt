@@ -18,6 +18,8 @@ import com.oppwa.mobile.connect.provider.ITransactionListener
 import com.oppwa.mobile.connect.provider.OppPaymentProvider
 import com.oppwa.mobile.connect.provider.Transaction
 import com.oppwa.mobile.connect.provider.TransactionType
+import com.oppwa.mobile.connect.provider.listener.BinInfoListener
+import com.oppwa.mobile.connect.provider.model.BinInfo
 import com.oppwa.mobile.connect.utils.googlepay.CardPaymentMethodJsonBuilder
 import com.oppwa.mobile.connect.utils.googlepay.TransactionInfoJsonBuilder
 import com.oppwa.mobile.connect.utils.googlepay.PaymentDataRequestJsonBuilder
@@ -143,6 +145,7 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
             "checkoutReadyUI" -> handleCheckoutReadyUI(call, result)
             "payCustomUI" -> handlePayCustomUI(call, result)
             "payApplePay" -> handlePayApplePay(result)
+            "requestBinInfo" -> handleRequestBinInfo(call, result)
             "getPaymentStatus" -> handleGetPaymentStatus(call, result)
             else -> result.notImplemented()
         }
@@ -301,6 +304,47 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
 
     private fun handlePayApplePay(result: Result) {
         result.error("UNSUPPORTED", "Apple Pay is not available on Android", null)
+    }
+
+    private fun handleRequestBinInfo(call: MethodCall, result: Result) {
+        val provider = paymentProvider ?: run {
+            result.error("NOT_INITIALIZED", "Call setup() before requesting BIN info", null)
+            return
+        }
+        val checkoutId = call.argument<String>("checkoutId") ?: run {
+            result.error("INVALID_ARGS", "checkoutId is required", null)
+            return
+        }
+        val bin = call.argument<String>("bin") ?: run {
+            result.error("INVALID_ARGS", "bin is required", null)
+            return
+        }
+
+        provider.requestBinInfo(checkoutId, bin, object : BinInfoListener {
+            override fun onResult(binInfo: BinInfo?, paymentError: PaymentError?) {
+                if (paymentError != null) {
+                    result.error(
+                        "BIN_INFO_ERROR",
+                        paymentError.errorMessage ?: "BIN info request failed",
+                        paymentError.errorCode.toString()
+                    )
+                    return
+                }
+                if (binInfo == null) {
+                    result.success(mapOf(
+                        "brands" to emptyList<String>(),
+                        "binType" to null,
+                        "type" to null,
+                    ))
+                    return
+                }
+                result.success(mapOf(
+                    "brands" to (binInfo.brands?.toList() ?: emptyList<String>()),
+                    "binType" to binInfo.binType,
+                    "type" to binInfo.type,
+                ))
+            }
+        })
     }
 
     private fun handleGetPaymentStatus(call: MethodCall, result: Result) {
