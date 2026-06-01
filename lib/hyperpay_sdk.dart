@@ -137,6 +137,49 @@ class HyperpaySdk {
     );
   }
 
+  /// Submit a payment via Apple Pay with a deferred checkout.
+  ///
+  /// Unlike [payApplePay], the HyperPay checkout is NOT created up front. The
+  /// Apple Pay sheet is presented immediately and, once the user authorises,
+  /// the detected card network (`"Visa"`, `"MasterCard"`, `"Mada"`, …) is passed
+  /// to [resolveCheckout]. Your callback creates a checkout on your server
+  /// tailored to that network (e.g. PA for Visa/MC, DB for MADA) and returns
+  /// the resulting `checkoutId`. The SDK then submits the Apple Pay token
+  /// against that checkout.
+  ///
+  /// Apple gives ~30 seconds between authorisation and result, so the server
+  /// call inside [resolveCheckout] must comfortably fit that window.
+  ///
+  /// - [resolveCheckout]: Async callback that maps the detected network to a
+  ///   server-issued checkoutId. Throw to abort the payment.
+  /// - [merchantId]: Your Apple Pay merchant identifier.
+  /// - [countryCode]: ISO 3166-1 alpha-2 country code.
+  /// - [currencyCode]: ISO 4217 currency code.
+  /// - [amount]: Payment amount.
+  /// - [companyName]: Company name displayed on the Apple Pay sheet.
+  /// - [shopperResultUrl]: URL scheme for async payment callbacks.
+  ///
+  /// Returns a [PaymentResult] with the transaction outcome.
+  static Future<PaymentResult> payApplePayDynamic({
+    required Future<String> Function(String network) resolveCheckout,
+    required String merchantId,
+    required String countryCode,
+    required String currencyCode,
+    required double amount,
+    required String companyName,
+    required String shopperResultUrl,
+  }) {
+    return HyperpaySdkMethodChannel.payApplePayDynamic(
+      resolveCheckout: resolveCheckout,
+      merchantId: merchantId,
+      countryCode: countryCode,
+      currencyCode: currencyCode,
+      amount: amount,
+      companyName: companyName,
+      shopperResultUrl: shopperResultUrl,
+    );
+  }
+
   /// Look up brand/type info for a card BIN via HyperPay's BIN service.
   ///
   /// Use this on the add-card screen as soon as the user has typed the first

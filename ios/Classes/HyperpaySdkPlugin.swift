@@ -39,6 +39,8 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             handlePayCustomUI(call, result: result)
         case "payApplePay":
             handlePayApplePay(call, result: result)
+        case "payApplePayDynamic":
+            handlePayApplePayDynamic(call, result: result)
         case "requestBinInfo":
             handleRequestBinInfo(call, result: result)
         case "getPaymentStatus":
@@ -365,6 +367,87 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
     private var pendingApplePayParams: OPPApplePayPaymentParams?
     private var pendingApplePayProvider: OPPPaymentProvider?
+    private var pendingApplePayDynamic: Bool = false
+
+    // MARK: - Apple Pay (Dynamic — checkout chosen after card network is known)
+
+    private func handlePayApplePayDynamic(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any],
+              let merchantId = args["merchantId"] as? String,
+              let countryCode = args["countryCode"] as? String,
+              let currencyCode = args["currencyCode"] as? String,
+              let amount = args["amount"] as? Double,
+              let companyName = args["companyName"] as? String,
+              let shopperUrl = args["shopperResultUrl"] as? String else {
+            result(FlutterError(code: "INVALID_ARGS", message: "All Apple Pay fields are required", details: nil))
+            return
+        }
+
+        self.shopperResultUrl = shopperUrl
+
+        guard let provider = paymentProvider else {
+            result(FlutterError(code: "NOT_INITIALIZED", message: "Call setup() before making payments", details: nil))
+            return
+        }
+
+        let paymentRequest = OPPPaymentProvider.paymentRequest(
+            withMerchantIdentifier: merchantId,
+            countryCode: countryCode
+        )
+        paymentRequest.currencyCode = currencyCode
+        paymentRequest.paymentSummaryItems = [
+            PKPaymentSummaryItem(label: companyName, amount: NSDecimalNumber(value: amount))
+        ]
+
+        // Make sure MADA cards appear in the wallet picker. HyperPay's default
+        // supportedNetworks may omit it.
+        var networks = paymentRequest.supportedNetworks
+        if #available(iOS 14.5, *), !networks.contains(.mada) {
+            networks.append(.mada)
+        }
+        if !networks.contains(.visa) { networks.append(.visa) }
+        if !networks.contains(.masterCard) { networks.append(.masterCard) }
+        paymentRequest.supportedNetworks = networks
+
+        pendingResult = result
+        pendingApplePayProvider = provider
+        pendingApplePayDynamic = true
+
+        if let rootVC = self.rootViewController(),
+           let applePayController = PKPaymentAuthorizationViewController(paymentRequest: paymentRequest) {
+            applePayController.delegate = self
+            rootVC.present(applePayController, animated: true, completion: nil)
+        } else {
+            pendingResult = nil
+            pendingApplePayProvider = nil
+            pendingApplePayDynamic = false
+            result(FlutterError(code: "NO_VIEW_CONTROLLER", message: "Cannot present Apple Pay", details: nil))
+        }
+    }
+
+    private func finishApplePayDynamic(success: Bool, transaction: OPPTransaction?, error: Error?, errorMessage: String? = nil) {
+        let pending = pendingResult
+        pendingResult = nil
+        pendingApplePayProvider = nil
+        pendingApplePayDynamic = false
+
+        if success {
+            pending?([
+                "isSuccess": true,
+                "isCanceled": false,
+                "resourcePath": transaction?.resourcePath ?? "",
+                "transactionType": "sync",
+            ] as [String: Any])
+        } else {
+            let nsError = error as NSError?
+            pending?([
+                "isSuccess": false,
+                "isCanceled": false,
+                "errorCode": nsError != nil ? "\(nsError!.code)" : "APPLE_PAY_DYNAMIC_ERROR",
+                "errorMessage": errorMessage ?? error?.localizedDescription ?? "Apple Pay failed",
+            ] as [String: Any])
+        }
+    }
 
     // MARK: - BIN Info
 
@@ -525,6 +608,7 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
                 self.pendingResult = nil
                 self.pendingApplePayParams = nil
                 self.pendingApplePayProvider = nil
+                self.pendingApplePayDynamic = false
                 pending?([
                     "isSuccess": false,
                     "isCanceled": true,
@@ -538,6 +622,66 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
         didAuthorizePayment payment: PKPayment,
         handler completion: @escaping (PKPaymentAuthorizationResult) -> Void
     ) {
+        // Dynamic flow — checkoutId is resolved by Dart based on detected card network.
+        if pendingApplePayDynamic {
+            guard let provider = pendingApplePayProvider else {
+                completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+                finishApplePayDynamic(success: false, transaction: nil, error: nil, errorMessage: "Provider unavailable")
+                return
+            }
+
+            let network = payment.token.paymentMethod.network?.rawValue ?? ""
+            NSLog("[HyperPay][ApplePayDynamic] detected network=%@", network)
+
+            guard let channel = self.channel else {
+                completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+                finishApplePayDynamic(success: false, transaction: nil, error: nil, errorMessage: "Method channel unavailable")
+                return
+            }
+
+            channel.invokeMethod(
+                "resolveApplePayCheckout",
+                arguments: ["network": network]
+            ) { [weak self] reply in
+                guard let self = self else { return }
+                guard let payload = reply as? [String: Any],
+                      let checkoutId = payload["checkoutId"] as? String,
+                      !checkoutId.isEmpty else {
+                    let errMsg = (reply as? [String: Any])?["error"] as? String
+                        ?? "Failed to resolve Apple Pay checkout ID"
+                    completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+                    self.finishApplePayDynamic(success: false, transaction: nil, error: nil, errorMessage: errMsg)
+                    return
+                }
+
+                do {
+                    let finalParams = try OPPApplePayPaymentParams(
+                        checkoutID: checkoutId,
+                        paymentBrand: "APPLEPAY",
+                        tokenData: payment.token.paymentData
+                    )
+                    if let shopperUrl = self.shopperResultUrl {
+                        finalParams.shopperResultURL = "\(shopperUrl)://callback"
+                    }
+                    let transaction = OPPTransaction(paymentParams: finalParams)
+                    provider.submitTransaction(transaction) { [weak self] (transaction, error) in
+                        guard let self = self else { return }
+                        if let error = error {
+                            completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+                            self.finishApplePayDynamic(success: false, transaction: transaction, error: error)
+                            return
+                        }
+                        completion(PKPaymentAuthorizationResult(status: .success, errors: nil))
+                        self.finishApplePayDynamic(success: true, transaction: transaction, error: nil)
+                    }
+                } catch {
+                    completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
+                    self.finishApplePayDynamic(success: false, transaction: nil, error: error)
+                }
+            }
+            return
+        }
+
         guard let params = pendingApplePayParams,
               let provider = pendingApplePayProvider else {
             completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))

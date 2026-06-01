@@ -1,3 +1,7 @@
+## 2.3.0
+
+- Add `HyperpaySdk.payApplePayDynamic(...)` — defers HyperPay checkout creation until the Apple Pay sheet has revealed the card network (`PKPaymentMethod.network`). The new `resolveCheckout` callback receives the detected network string (`"Visa"`, `"MasterCard"`, `"Mada"`, …) and returns a server-issued `checkoutId`, letting callers route MADA Apple Pay to DB and non-MADA to PA on the same code path. Existing `payApplePay` is unchanged. iOS only — Android Google Pay does not need this. The native presentation explicitly adds `.mada` to `PKPaymentRequest.supportedNetworks` (iOS 14.5+) so MADA-only cards are eligible for the wallet picker.
+
 ## 2.2.0
 
 - **Upgrade** underlying HyperPay (OPPWA) Mobile SDK from `7.4.0` → `7.8.1` on both iOS and Android. No public Dart API changes. The `OPPWAMobile` and `ipworks3ds_sdk` frameworks are updated; ipworks3ds versions on iOS are now `9485`, Android `9469`. Transitive Android dependencies are unchanged.
