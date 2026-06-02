@@ -1,6 +1,7 @@
 ## 2.3.0
 
 - Add `HyperpaySdk.payApplePayDynamic(...)` — defers HyperPay checkout creation until the Apple Pay sheet has revealed the card network (`PKPaymentMethod.network`). The new `resolveCheckout` callback receives the detected network string (`"Visa"`, `"MasterCard"`, `"Mada"`, …) and returns a server-issued `checkoutId`, letting callers route MADA Apple Pay to DB and non-MADA to PA on the same code path. Existing `payApplePay` is unchanged. iOS only — Android Google Pay does not need this. The native presentation explicitly adds `.mada` to `PKPaymentRequest.supportedNetworks` (iOS 14.5+) so MADA-only cards are eligible for the wallet picker.
+- Guard both Apple Pay entry points (`payApplePay`, `payApplePayDynamic`) with `PKPaymentAuthorizationViewController.canMakePayments()` before presenting. Without this PassKit can hard-abort the host app via `abort_with_payload` when the merchant ID isn't entitled (no `com.apple.developer.in-app-payments`, no payment-processing certificate, or no eligible Wallet cards). The guard returns a clean `errorCode: "APPLE_PAY_UNAVAILABLE"` result instead.
 
 ## 2.2.0
 

@@ -326,6 +326,20 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             return
         }
 
+        // Fail gracefully when the device can't do Apple Pay — no wallet cards,
+        // no entitlement, or no payment-processing certificate. Without this
+        // guard PassKit will hard-abort the process via abort_with_payload
+        // when the merchant ID isn't entitled.
+        guard PKPaymentAuthorizationViewController.canMakePayments() else {
+            result([
+                "isSuccess": false,
+                "isCanceled": false,
+                "errorCode": "APPLE_PAY_UNAVAILABLE",
+                "errorMessage": "Apple Pay is not available on this device (no entitlement, no payment-processing certificate, or no eligible cards in Wallet).",
+            ] as [String: Any])
+            return
+        }
+
         let paymentRequest = OPPPaymentProvider.paymentRequest(
             withMerchantIdentifier: merchantId,
             countryCode: countryCode
@@ -387,6 +401,19 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
         guard let provider = paymentProvider else {
             result(FlutterError(code: "NOT_INITIALIZED", message: "Call setup() before making payments", details: nil))
+            return
+        }
+
+        // Same canMakePayments() guard as the static flow — without it PassKit
+        // can abort_with_payload the process when the merchant ID isn't
+        // entitled, killing the host app instead of returning an error.
+        guard PKPaymentAuthorizationViewController.canMakePayments() else {
+            result([
+                "isSuccess": false,
+                "isCanceled": false,
+                "errorCode": "APPLE_PAY_UNAVAILABLE",
+                "errorMessage": "Apple Pay is not available on this device (no entitlement, no payment-processing certificate, or no eligible cards in Wallet).",
+            ] as [String: Any])
             return
         }
 
