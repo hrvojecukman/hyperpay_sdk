@@ -9,7 +9,6 @@ import androidx.activity.result.ActivityResultLauncher
 import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResult
 import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResultContract
 import com.oppwa.mobile.connect.checkout.meta.CheckoutSettings
-import com.oppwa.mobile.connect.checkout.meta.CheckoutSkipCVVMode
 import com.oppwa.mobile.connect.exception.PaymentError
 import com.oppwa.mobile.connect.exception.PaymentException
 import com.oppwa.mobile.connect.payment.card.CardPaymentParams
@@ -187,7 +186,11 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
         try {
             val paymentBrands = HashSet(brands)
             val checkoutSettings = CheckoutSettings(checkoutId, paymentBrands, providerMode)
-            checkoutSettings.setSkipCVVMode(CheckoutSkipCVVMode.FOR_STORED_CARDS)
+            // NOTE: Do NOT skip CVV for stored cards. The SAIB MPGS connector
+            // rejects stored-card preauth/debit transactions submitted without a
+            // CVV as 800.100.156 (INVALID_REQUEST / "did not conform to API
+            // protocol"). iOS always collects CVV and succeeds, so we match that
+            // behaviour here rather than skipping it.
 
             if (lang != null) {
                 checkoutSettings.locale = lang

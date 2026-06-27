@@ -1,3 +1,7 @@
+## 2.3.1
+
+- **Fix (Android)**: stop skipping CVV for stored cards in the Ready-UI checkout. `checkoutReadyUI` previously set `CheckoutSkipCVVMode.FOR_STORED_CARDS`, so saved/tokenized cards were submitted without a CVV. Some acquirer connectors (e.g. SAIB MPGS) reject such requests with `800.100.156` ("transaction declined (format error)" / `INVALID_REQUEST`), so stored-card payments failed on Android while succeeding on iOS (which always collects CVV). Android now collects CVV for stored cards too, matching iOS behaviour. No Dart API changes.
+
 ## 2.3.0
 
 - Add `HyperpaySdk.payApplePayDynamic(...)` — defers HyperPay checkout creation until the Apple Pay sheet has revealed the card network (`PKPaymentMethod.network`). The new `resolveCheckout` callback receives the detected network string (`"Visa"`, `"MasterCard"`, `"Mada"`, …) and returns a server-issued `checkoutId`, letting callers route MADA Apple Pay to DB and non-MADA to PA on the same code path. Existing `payApplePay` is unchanged. iOS only — Android Google Pay does not need this. The native presentation explicitly adds `.mada` to `PKPaymentRequest.supportedNetworks` (iOS 14.5+) so MADA-only cards are eligible for the wallet picker.
