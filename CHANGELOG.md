@@ -1,3 +1,7 @@
+## 2.3.2
+
+- **Fix (iOS & Android)**: report shopper-initiated aborts as cancellations instead of failures. When the user dismissed the 3-D Secure challenge sheet (`OPPErrorCodeThreeDS2ChallengeCanceled` / `ERROR_CODE_THREEDS2_CANCELED`) or closed the payment page (`OPPErrorCodeTransactionAborted` / `ERROR_CODE_TRANSACTION_ABORTED`), the SDK returned `PaymentResult(isSuccess: false, isCanceled: false)` with a raw, untranslated message like `"The challenge was canceled. [domain=…, code=6001, …]"`. These are now returned as `PaymentResult(isCanceled: true)` so apps can silently abort. No Dart API changes.
+
 ## 2.3.1
 
 - **Fix (Android)**: stop skipping CVV for stored cards in the Ready-UI checkout. `checkoutReadyUI` previously set `CheckoutSkipCVVMode.FOR_STORED_CARDS`, so saved/tokenized cards were submitted without a CVV. Some acquirer connectors (e.g. SAIB MPGS) reject such requests with `800.100.156` ("transaction declined (format error)" / `INVALID_REQUEST`), so stored-card payments failed on Android while succeeding on iOS (which always collects CVV). Android now collects CVV for stored cards too, matching iOS behaviour. No Dart API changes.

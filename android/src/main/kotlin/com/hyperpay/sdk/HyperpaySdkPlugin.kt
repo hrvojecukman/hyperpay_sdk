@@ -9,6 +9,7 @@ import androidx.activity.result.ActivityResultLauncher
 import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResult
 import com.oppwa.mobile.connect.checkout.meta.CheckoutActivityResultContract
 import com.oppwa.mobile.connect.checkout.meta.CheckoutSettings
+import com.oppwa.mobile.connect.exception.ErrorCode
 import com.oppwa.mobile.connect.exception.PaymentError
 import com.oppwa.mobile.connect.exception.PaymentException
 import com.oppwa.mobile.connect.payment.card.CardPaymentParams
@@ -399,12 +400,28 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
         val pending = pendingResult ?: return
         pendingResult = null
 
+        // Shopper-initiated aborts (closing the payment page or dismissing the
+        // 3-D Secure challenge) are cancellations, not failures — report them as
+        // such so the app silently aborts instead of showing a raw error.
+        if (isUserCancellation(paymentError.errorCode)) {
+            pending.success(mapOf(
+                "isSuccess" to false,
+                "isCanceled" to true,
+            ))
+            return
+        }
+
         pending.success(mapOf(
             "isSuccess" to false,
             "isCanceled" to false,
             "errorCode" to paymentError.errorCode.toString(),
             "errorMessage" to paymentError.errorMessage,
         ))
+    }
+
+    private fun isUserCancellation(errorCode: ErrorCode): Boolean {
+        return errorCode == ErrorCode.ERROR_CODE_TRANSACTION_ABORTED ||
+            errorCode == ErrorCode.ERROR_CODE_THREEDS2_CANCELED
     }
 
     // endregion

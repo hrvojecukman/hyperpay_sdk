@@ -1,5 +1,3 @@
-library hyperpay_sdk;
-
 export 'src/models.dart';
 
 import 'src/hyperpay_sdk_method_channel.dart';

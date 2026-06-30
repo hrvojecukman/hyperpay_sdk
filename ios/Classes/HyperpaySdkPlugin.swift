@@ -155,17 +155,39 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         }
     }
 
+    // OPP SDK error codes that represent the *shopper* aborting the flow rather
+    // than a real failure: closing the payment page (2003) or dismissing the
+    // 3-D Secure challenge sheet (6001). See OPPErrors.h. These must be reported
+    // to Flutter as cancellations (not failures with a raw, untranslated
+    // message) so the app can silently abort.
+    private static let oppErrorTransactionAborted = 2003 // OPPErrorCodeTransactionAborted
+    private static let oppErrorThreeDS2ChallengeCanceled = 6001 // OPPErrorCodeThreeDS2ChallengeCanceled
+
+    private func isUserCancellation(_ error: NSError) -> Bool {
+        return error.code == HyperpaySdkPlugin.oppErrorTransactionAborted
+            || error.code == HyperpaySdkPlugin.oppErrorThreeDS2ChallengeCanceled
+    }
+
+    /// Builds the Flutter result map for a failed transaction, flagging
+    /// user-initiated cancellations via `isCanceled` so the UI shows nothing.
+    private func transactionErrorResult(_ error: NSError) -> [String: Any] {
+        if isUserCancellation(error) {
+            return ["isSuccess": false, "isCanceled": true]
+        }
+        let detail = "domain=\(error.domain), code=\(error.code), userInfo=\(error.userInfo)"
+        return [
+            "isSuccess": false,
+            "isCanceled": false,
+            "errorCode": "\(error.code)",
+            "errorMessage": "\(error.localizedDescription) [\(detail)]",
+        ]
+    }
+
     private func handleCheckoutCompletion(transaction: OPPTransaction?, error: Error?) {
         guard let pending = pendingResult else { return }
 
         if let error = error as NSError? {
-            let detail = "domain=\(error.domain), code=\(error.code), userInfo=\(error.userInfo)"
-            pending([
-                "isSuccess": false,
-                "isCanceled": false,
-                "errorCode": "\(error.code)",
-                "errorMessage": "\(error.localizedDescription) [\(detail)]",
-            ] as [String: Any])
+            pending(transactionErrorResult(error))
             pendingResult = nil
             return
         }
@@ -263,13 +285,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
 
                 if let error = error as NSError? {
                     self.pendingResult = nil
-                    let detail = "domain=\(error.domain), code=\(error.code), userInfo=\(error.userInfo)"
-                    pending([
-                        "isSuccess": false,
-                        "isCanceled": false,
-                        "errorCode": "\(error.code)",
-                        "errorMessage": "\(error.localizedDescription) [\(detail)]",
-                    ] as [String: Any])
+                    pending(self.transactionErrorResult(error))
                     return
                 }
 
@@ -467,6 +483,10 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             ] as [String: Any])
         } else {
             let nsError = error as NSError?
+            if let nsError = nsError, isUserCancellation(nsError) {
+                pending?(["isSuccess": false, "isCanceled": true] as [String: Any])
+                return
+            }
             pending?([
                 "isSuccess": false,
                 "isCanceled": false,
@@ -742,12 +762,7 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
 
             if let error = error {
                 completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
-                pending?([
-                    "isSuccess": false,
-                    "isCanceled": false,
-                    "errorCode": "\((error as NSError).code)",
-                    "errorMessage": error.localizedDescription,
-                ] as [String: Any])
+                pending?(self.transactionErrorResult(error as NSError))
                 return
             }
 
