@@ -1,5 +1,5 @@
 group 'com.hyperpay.sdk'
-version '7.8.1'
+version '7.11.0'
 
 buildscript {
     ext.kotlin_version = '2.0.21'
@@ -57,21 +57,30 @@ android {
 
 dependencies {
     // HyperPay OPPWA SDK (via JitPack)
-    api 'com.github.hrvojecukman.hyperpay_sdk_android:oppwa:v7.8.1.0:oppwa@aar'
+    api 'com.github.hrvojecukman.hyperpay_sdk_android:oppwa:v7.11.0.0:oppwa@aar'
 
     // 3DS2 SDK — debug vs release variants (via JitPack)
-    debugApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds:v7.8.1.0:ipworks3ds@aar'
-    releaseApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds_deploy:v7.8.1.0:ipworks3ds_deploy@aar'
+    debugApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds:v7.11.0.0:ipworks3ds@aar'
+    releaseApi 'com.github.hrvojecukman.hyperpay_sdk_android:ipworks3ds_deploy:v7.11.0.0:ipworks3ds_deploy@aar'
 
     // AndroidX & Google dependencies required by OPPWA SDK
+    // (mirrors dependencies.txt shipped with Android_Frameworks_7.11.0)
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.browser:browser:1.8.0'
-    implementation 'androidx.webkit:webkit:1.12.1'
-    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.6'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.webkit:webkit:1.13.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
     implementation 'com.google.android.gms:play-services-wallet:19.4.0'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+
+    // PayPal / Venmo (Braintree) brands added in OPPWA 7.11.0 are not wired into
+    // this plugin, so their Braintree dependencies are intentionally omitted:
+    //   com.braintreepayments.api:paypal:5.18.0
+    //   com.braintreepayments.api:venmo:5.18.0
+    //   com.braintreepayments.api:data-collector:5.18.0
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

@@ -419,9 +419,12 @@ class HyperpaySdkPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, ITran
         ))
     }
 
+    // ERROR_CODE_GENERAL_CANCEL was added in OPPWA 7.11.0 and is raised when the
+    // shopper dismisses a processor-owned sheet (e.g. Paze, Braintree/PayPal).
     private fun isUserCancellation(errorCode: ErrorCode): Boolean {
         return errorCode == ErrorCode.ERROR_CODE_TRANSACTION_ABORTED ||
-            errorCode == ErrorCode.ERROR_CODE_THREEDS2_CANCELED
+            errorCode == ErrorCode.ERROR_CODE_THREEDS2_CANCELED ||
+            errorCode == ErrorCode.ERROR_CODE_GENERAL_CANCEL
     }
 
     // endregion

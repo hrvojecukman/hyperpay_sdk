@@ -1,9 +1,9 @@
 PODS:
   - Flutter (1.0.0)
-  - hyperpay_sdk (7.8.1):
+  - hyperpay_sdk (7.11.0):
     - Flutter
-    - hyperpay_sdk_ios (= 7.8.1)
-  - hyperpay_sdk_ios (7.8.1)
+    - hyperpay_sdk_ios (= 7.11.0)
+  - hyperpay_sdk_ios (7.11.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -11,7 +11,7 @@ PODS:
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - hyperpay_sdk (from `.symlinks/plugins/hyperpay_sdk/ios`)
-  - hyperpay_sdk_ios (from `https://github.com/hrvojecukman/hyperpay_sdk_ios.git`, tag `7.8.1`)
+  - hyperpay_sdk_ios (from `https://github.com/hrvojecukman/hyperpay_sdk_ios.git`, tag `7.11.0`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
 
 EXTERNAL SOURCES:
@@ -21,21 +21,21 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/hyperpay_sdk/ios"
   hyperpay_sdk_ios:
     :git: https://github.com/hrvojecukman/hyperpay_sdk_ios.git
-    :tag: 7.8.1
+    :tag: 7.11.0
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
 CHECKOUT OPTIONS:
   hyperpay_sdk_ios:
     :git: https://github.com/hrvojecukman/hyperpay_sdk_ios.git
-    :tag: 7.8.1
+    :tag: 7.11.0
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  hyperpay_sdk: 353cc4558e3ed5c7c1f79cfd72cdff433b79181b
-  hyperpay_sdk_ios: 7c536cb784b03407edfa2493981bb2db1817e93e
+  hyperpay_sdk: e3ecce1023b572c17947f425ea1ac32f24300afb
+  hyperpay_sdk_ios: 9b9821ce4ce0b905aa0c740595d8e1292519904f
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 
-PODFILE CHECKSUM: b549562b576d0f348460ff8c9ed66e927d5e0af4
+PODFILE CHECKSUM: 0b046e414a0d9a603860a5453dba42f0d19c4b6c
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

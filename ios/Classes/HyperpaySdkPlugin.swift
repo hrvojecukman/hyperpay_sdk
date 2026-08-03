@@ -156,16 +156,19 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
     }
 
     // OPP SDK error codes that represent the *shopper* aborting the flow rather
-    // than a real failure: closing the payment page (2003) or dismissing the
-    // 3-D Secure challenge sheet (6001). See OPPErrors.h. These must be reported
-    // to Flutter as cancellations (not failures with a raw, untranslated
-    // message) so the app can silently abort.
+    // than a real failure: closing the payment page (2003), dismissing the
+    // 3-D Secure challenge sheet (6001), or a processor-level cancel (9001,
+    // added in OPPWA 7.11.0 — e.g. dismissing the Paze/Braintree sheet).
+    // See OPPErrors.h. These must be reported to Flutter as cancellations (not
+    // failures with a raw, untranslated message) so the app can silently abort.
     private static let oppErrorTransactionAborted = 2003 // OPPErrorCodeTransactionAborted
     private static let oppErrorThreeDS2ChallengeCanceled = 6001 // OPPErrorCodeThreeDS2ChallengeCanceled
+    private static let oppErrorGeneralCancel = 9001 // OPPErrorCodeGeneralCancelError
 
     private func isUserCancellation(_ error: NSError) -> Bool {
         return error.code == HyperpaySdkPlugin.oppErrorTransactionAborted
             || error.code == HyperpaySdkPlugin.oppErrorThreeDS2ChallengeCanceled
+            || error.code == HyperpaySdkPlugin.oppErrorGeneralCancel
     }
 
     /// Builds the Flutter result map for a failed transaction, flagging

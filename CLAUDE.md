@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Flutter plugin wrapping the HyperPay OPPWA Mobile SDK v7.4.0. Provides ReadyUI (pre-built checkout), CustomUI (card form), Apple Pay (iOS), and Google Pay (Android) payment flows. Supports VISA, MasterCard, MADA, STC Pay, 3DS2, and tokenization.
+Flutter plugin wrapping the HyperPay OPPWA Mobile SDK v7.11.0. Provides ReadyUI (pre-built checkout), CustomUI (card form), Apple Pay (iOS), and Google Pay (Android) payment flows. Supports VISA, MasterCard, MADA, STC Pay, 3DS2, and tokenization.
 
 ## Build & Development Commands
 
@@ -32,7 +32,7 @@ Dart API (lib/hyperpay_sdk.dart - HyperpaySdk class)
         └── oppwa.mobile AAR + ipworks3ds AAR
 ```
 
-**5 method channel calls:** `setup`, `checkoutReadyUI`, `payCustomUI`, `payApplePay`, `getPaymentStatus`
+**Method channel calls:** `setup`, `checkoutReadyUI`, `payCustomUI`, `payApplePay`, `payApplePayDynamic` (iOS only), `requestBinInfo`, `getPaymentStatus`
 
 **Transaction types:**
 - **Sync** — immediate result with resourcePath for server verification
@@ -44,7 +44,10 @@ Dart API (lib/hyperpay_sdk.dart - HyperpaySdk class)
 
 - **iOS:** min 13.0, Swift 5.0, static framework required (configured in podspec and example Podfile)
 - **Android:** minSdk 24, Java 17, Kotlin 2.0.21, Gradle 8.7.3
-- **Native SDK binaries** are not bundled — users must place XCFrameworks in `ios/Frameworks/` and AARs in `android/libs/`
+- **Native SDK binaries** are not bundled in this repo — they are pulled from two companion repos:
+  - iOS: pod `hyperpay_sdk_ios` (version-matched to the OPPWA version, tag `7.11.0`) — https://github.com/hrvojecukman/hyperpay_sdk_ios
+  - Android: JitPack `com.github.hrvojecukman.hyperpay_sdk_android:{oppwa,ipworks3ds,ipworks3ds_deploy}` (tag `v7.11.0.0`) — https://github.com/hrvojecukman/hyperpay_sdk_android
+  - Upgrading the native SDK means: swap the binaries in those two repos, bump + tag them, then bump `ios/hyperpay_sdk.podspec`, `android/build.gradle` and the example `Podfile`
 
 ## Linting
 
