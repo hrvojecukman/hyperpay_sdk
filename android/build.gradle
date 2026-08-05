@@ -74,6 +74,18 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
+    // OPPWA's CheckoutViewModel.getTransactionResultLiveData() uses MediatorLiveData,
+    // which ships in lifecycle-livedata — NOT in lifecycle-livedata-core (LiveData,
+    // MutableLiveData, Observer) that appcompat/fragment pull in transitively, and NOT
+    // in lifecycle-viewmodel-ktx (whose only runtime deps are lifecycle-viewmodel,
+    // kotlin-stdlib and kotlinx-coroutines-android — its lifecycle-livedata entry is a
+    // BOM *constraint*, so it never lands on the graph). The deprecated
+    // lifecycle-extensions:2.2.0 this plugin used up to 2.3.2 did pull it in, so
+    // dropping it in 2.4.0 turned BaseServiceActivity.onStart() into a hard
+    // NoClassDefFoundError on androidx.lifecycle.MediatorLiveData. HyperPay's
+    // dependencies.txt omits this — their own 7.11.0 Demo app still declares
+    // lifecycle-extensions:2.2.0, which is where it came from.
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
     implementation 'com.google.android.gms:play-services-wallet:19.4.0'
 
     // PayPal / Venmo (Braintree) brands added in OPPWA 7.11.0 are not wired into
