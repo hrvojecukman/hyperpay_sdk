@@ -52,7 +52,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  hyperpay_sdk: ^2.4.1
+  hyperpay_sdk: ^2.4.2
 ```
 
 Then run:
