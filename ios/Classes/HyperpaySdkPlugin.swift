@@ -375,6 +375,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
             )
 
             pendingResult = result
+            applePaySubmissionInFlight = false
 
             // Present Apple Pay
             if let rootVC = self.rootViewController() {
@@ -401,6 +402,13 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
     private var pendingApplePayParams: OPPApplePayPaymentParams?
     private var pendingApplePayProvider: OPPPaymentProvider?
     private var pendingApplePayDynamic: Bool = false
+    /// True from the moment Apple Pay hands us an authorized token until the
+    /// HyperPay submission (or the checkout resolution that precedes it) has
+    /// resolved `pendingResult`. While set, the sheet closing is NOT a
+    /// cancellation: the payment is already on its way to the gateway and may
+    /// still succeed, so `paymentAuthorizationViewControllerDidFinish` must
+    /// leave `pendingResult` for the submit completion to resolve.
+    private var applePaySubmissionInFlight: Bool = false
 
     // MARK: - Apple Pay (Dynamic — checkout chosen after card network is known)
 
@@ -458,6 +466,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         pendingResult = result
         pendingApplePayProvider = provider
         pendingApplePayDynamic = true
+        applePaySubmissionInFlight = false
 
         if let rootVC = self.rootViewController(),
            let applePayController = PKPaymentAuthorizationViewController(paymentRequest: paymentRequest) {
@@ -476,6 +485,7 @@ public class HyperpaySdkPlugin: NSObject, FlutterPlugin {
         pendingResult = nil
         pendingApplePayProvider = nil
         pendingApplePayDynamic = false
+        applePaySubmissionInFlight = false
 
         if success {
             pending?([
@@ -652,6 +662,15 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
     ) {
         controller.dismiss(animated: true) { [weak self] in
             guard let self = self else { return }
+            // The sheet can close while an authorized payment is still being
+            // submitted to HyperPay (user dismissed it mid-"Processing", app
+            // backgrounded, iOS timed the sheet out). That is not a cancellation
+            // — the charge can still land seconds later. Reporting it as one made
+            // the host app cancel a booking HyperPay had charged. Leave
+            // pendingResult for the submit completion to resolve.
+            if self.applePaySubmissionInFlight {
+                return
+            }
             // If pendingResult is still set, no authorization happened — user canceled
             if self.pendingResult != nil {
                 let pending = self.pendingResult
@@ -689,6 +708,7 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
                 return
             }
 
+            applePaySubmissionInFlight = true
             channel.invokeMethod(
                 "resolveApplePayCheckout",
                 arguments: ["network": network]
@@ -756,12 +776,14 @@ extension HyperpaySdkPlugin: PKPaymentAuthorizationViewControllerDelegate {
         }
 
         let transaction = OPPTransaction(paymentParams: finalParams)
+        applePaySubmissionInFlight = true
         provider.submitTransaction(transaction) { [weak self] (transaction, error) in
             guard let self = self else { return }
             let pending = self.pendingResult
             self.pendingResult = nil
             self.pendingApplePayParams = nil
             self.pendingApplePayProvider = nil
+            self.applePaySubmissionInFlight = false
 
             if let error = error {
                 completion(PKPaymentAuthorizationResult(status: .failure, errors: nil))
